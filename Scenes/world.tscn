@@ -1,0 +1,44 @@
+[gd_scene load_steps=5 format=3 uid="uid://clroau2frju5j"]
+
+[ext_resource type="Script" path="res://Scripts/World.gd" id="1_ii6my"]
+[ext_resource type="PackedScene" uid="uid://dockr54xmjfuy" path="res://Scenes/chunk.tscn" id="2_nxgqr"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_yj3jc"]
+frequency = 0.0035
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_msa3k"]
+size = Vector2(100, 100)
+
+[node name="World" type="Node3D"]
+script = ExtResource("1_ii6my")
+noise = SubResource("FastNoiseLite_yj3jc")
+chunk_scene = ExtResource("2_nxgqr")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.902254, 0.431204, 0, -0.431204, 0.902254, 0, 128, 0)
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 342.296, -544.693)
+visible = false
+light_energy = 7.552
+light_indirect_energy = 1.77
+light_size = 0.752
+light_specular = 3.7
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(97.3976, 0, 22.6651, 0, 100, 0, -22.6651, 0, 97.3976, 0, 0, 0)
+visible = false
+lod_bias = 0.001
+mesh = SubResource("PlaneMesh_msa3k")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.750064, -0.399071, -0.527395, -0.643254, 0.625537, 0.441506, 0.153713, 0.670407, -0.725897, 0, 128, 1)
+light_energy = 1.441
+light_indirect_energy = 3.345
+light_volumetric_fog_energy = 3.164
+light_angular_distance = 33.56
+shadow_enabled = true
+shadow_bias = 2.373
+shadow_normal_bias = 1.379
+shadow_transmittance_bias = -9.311
+shadow_blur = 0.899
