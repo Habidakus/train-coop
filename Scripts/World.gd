@@ -12,10 +12,10 @@ const units_per_meter : float = 10
 const meters_per_mile : float = 1609.34
 const meters_per_foot : float = 0.3048
 
-const chunk_size : int = 1024
+const chunk_size : int = 2048
 const chunk_amount : int = 2
 const chunk_radius : int = int(chunk_amount * 0.5);
-const chunk_subdivide : int = 64
+const chunk_subdivide : int = 96
 const chunk_height : float = 64
 
 var train_cars = []
@@ -48,6 +48,10 @@ func _process(_delta: float):
 	update_chunks()
 	clean_up_chunks()
 	reset_chunks()
+	
+	if $DirectionalLight3D is DirectionalLight3D:
+		($DirectionalLight3D as DirectionalLight3D).rotation.x -= _delta / 300.0
+		($DirectionalLight3D as DirectionalLight3D).rotation.y += _delta / 300.0
 	
 	var meters_per_second = meters_per_mile * train_speed_miles_per_hour / 3600.0
 	$Camera3D.position.z -= meters_per_second * _delta * units_per_meter

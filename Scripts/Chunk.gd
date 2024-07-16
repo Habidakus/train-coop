@@ -22,7 +22,34 @@ func c_init(inoise : Noise, key : Vector2i, ichunk_size : float, isubdivide : in
 func _ready():
 	generate_chunk()
 
+func get_height_rr(_ix : float, _iz : float):
+	return 0
+	
+func get_height_valley(ix : float, iz : float):
+	return noise.get_noise_2d(ix, iz) / 2.0
+		
+func get_height_hill(ix : float, iz : float):
+	const hill_scale : float = 32.0
+	return (noise.get_noise_2d(ix / hill_scale, iz / hill_scale) + 0.25) * 64.0
+
 func get_height(ix : float, iz : float):
+	var x_offset :float = abs(ix)
+	const valley_width : float = 512.0
+	if x_offset < valley_width:
+		var weight : float = x_offset / valley_width
+		weight = sqrt(weight)
+		return lerpf(get_height_rr(ix, iz), get_height_valley(ix, iz), weight)
+	else:
+		const hill_width = 2024.0
+		var x_offset_valley = x_offset - valley_width
+		if x_offset_valley < hill_width:
+			var weight : float = x_offset_valley / hill_width
+			weight = weight * weight
+			return lerpf(get_height_valley(ix, iz), get_height_hill(ix, iz), weight)
+		else:
+			return get_height_hill(ix, iz)
+
+func get_height_old(ix : float, iz : float):
 	var x_offset = abs(ix)
 	
 	const rr_width : float = 32

@@ -73,7 +73,7 @@ lod_bias = 24.482
 mesh = SubResource("PlaneMesh_msa3k")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(-0.750064, -0.399071, -0.527395, -0.643254, 0.625537, 0.441506, 0.153713, 0.670407, -0.725897, 0, 128, 1)
+transform = Transform3D(0.387152, -0.693402, 0.607706, -0.843391, -3.68658e-08, 0.5373, -0.372564, -0.720551, -0.584809, 0, 128, 1)
 light_energy = 1.441
 light_indirect_energy = 3.345
 light_volumetric_fog_energy = 3.164
