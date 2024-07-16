@@ -40,7 +40,7 @@ func get_height(ix : float, iz : float):
 		weight = sqrt(weight)
 		return lerpf(get_height_rr(ix, iz), get_height_valley(ix, iz), weight)
 	else:
-		const hill_width = 2024.0
+		const hill_width = 3036.0
 		var x_offset_valley = x_offset - valley_width
 		if x_offset_valley < hill_width:
 			var weight : float = x_offset_valley / hill_width
@@ -103,9 +103,6 @@ func generate_chunk():
 	plane_mesh.size = Vector2(chunk_size, chunk_size)
 	plane_mesh.subdivide_depth = subdivide
 	plane_mesh.subdivide_width = subdivide
-	
-	#print("Generate Chunk ", x, " , ", z)
-	#TODO: Need material
 	
 	var surface_tool = SurfaceTool.new()
 	surface_tool.create_from(plane_mesh, 0);

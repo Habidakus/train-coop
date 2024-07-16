@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://s17v7b8mbot3"]
+
+[ext_resource type="PackedScene" uid="uid://dyb22uarylggx" path="res://models/tank02.blend" id="1_dosft"]
+
+[node name="Enemy" type="Node3D"]
+
+[node name="Model" parent="." instance=ExtResource("1_dosft")]

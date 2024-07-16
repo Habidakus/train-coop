@@ -1,8 +1,9 @@
-[gd_scene load_steps=12 format=3 uid="uid://clroau2frju5j"]
+[gd_scene load_steps=13 format=3 uid="uid://clroau2frju5j"]
 
 [ext_resource type="Script" path="res://Scripts/World.gd" id="1_ii6my"]
 [ext_resource type="PackedScene" uid="uid://dockr54xmjfuy" path="res://Scenes/chunk.tscn" id="2_nxgqr"]
 [ext_resource type="PackedScene" uid="uid://m4jrc40o51q1" path="res://Scenes/train_car_cargo.tscn" id="3_dyul8"]
+[ext_resource type="PackedScene" uid="uid://s17v7b8mbot3" path="res://Scenes/enemy.tscn" id="4_7lre2"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_yj3jc"]
 frequency = 0.0035
@@ -12,7 +13,7 @@ offsets = PackedFloat32Array(0, 0.993103)
 colors = PackedColorArray(0.365414, 0.266869, 0.126065, 1, 0.7, 0.5075, 0.238, 1)
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_rffc3"]
-fractal_type = 3
+noise_type = 0
 fractal_octaves = 2
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_rym41"]
@@ -51,11 +52,13 @@ script = ExtResource("1_ii6my")
 noise = SubResource("FastNoiseLite_yj3jc")
 chunk_scene = ExtResource("2_nxgqr")
 train_car_scene = ExtResource("3_dyul8")
+enemy_scene = ExtResource("4_7lre2")
 chunk_material = SubResource("StandardMaterial3D_gy0so")
 box_car_spacing_feet = 58.0
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.999961, 0.00872653, 0, -0.00872653, 0.999961, 0, 128, 0)
+far = 90000.0
 
 [node name="OmniLight3D" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 342.296, -544.693)
