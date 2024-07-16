@@ -26,16 +26,16 @@ var existing_chunks = {}
 func _ready():
 	randomize()
 	noise.seed = randi()
-	$Camera3D.position.y = 25.0
+	$Camera3D.position.y = 45.0
 	
 	for i in range(0, box_car_count):
 		var train_car = train_car_scene.instantiate()
 		train_car.find_child("CSGBox3D").scale *= units_per_meter
+		train_car.find_child("Model").scale *= units_per_meter
 		train_cars.append(train_car)
 		add_child(train_car)
 		var box_car_spacing_meters : float = box_car_spacing_feet * meters_per_foot
-		train_car.position = $Camera3D.position - Vector3(0, 25, i * box_car_spacing_meters * units_per_meter)
-		print(train_car.position)
+		train_car.position = Vector3($Camera3D.position.x, 0, $Camera3D.position.z - i * box_car_spacing_meters * units_per_meter)
 		
 	for z in range(-1, 1):
 		add_chunk(-1, z)
@@ -54,7 +54,7 @@ func _process(_delta: float):
 	#$Camera3D.rotation_degrees.y += _delta
 	var box_car_spacing_meters : float = box_car_spacing_feet * meters_per_foot
 	for i in range(0, box_car_count):
-		train_cars[i].position = $Camera3D.position - Vector3(0, 25, i * box_car_spacing_meters * units_per_meter)
+		train_cars[i].position = Vector3($Camera3D.position.x, 0, $Camera3D.position.z - i * box_car_spacing_meters * units_per_meter)
 	
 func update_chunks():
 	var pt = $Camera3D.position
