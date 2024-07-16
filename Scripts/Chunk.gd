@@ -21,7 +21,7 @@ func _ready():
 	generate_chunk()
 
 func get_height(ix : float, iz : float):
-	const rrwidth :float = 16
+	const rrwidth :float = 32
 	const rry : float = 0.0
 	var offset : float = abs(ix) - rrwidth
 	if offset < 0:
@@ -29,8 +29,11 @@ func get_height(ix : float, iz : float):
 	var y = noise.get_noise_2d(ix, iz)
 	if offset < rrwidth:
 		offset /= rrwidth
+		offset = 1 - offset
 		offset = offset * offset
-		return y * offset + rry * (1 - offset)
+		return rry * offset + y * (1 - offset)
+	if offset > 256:
+		y = y * pow(2, ((offset - 256.0) / 256.0))
 	return y
 
 func generate_chunk():

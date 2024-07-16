@@ -6,6 +6,8 @@ extends Node3D
 const chunk_size : int = 1024
 const chunk_amount : int = 4
 const chunk_radius : int = int(chunk_amount * 0.5);
+const chunk_subdivide : int = 64
+const chunk_height : float = 64
 
 var created_chunks = {}
 #var building_chunks = {}
@@ -30,7 +32,7 @@ func update_chunks():
 	var px :int = int(pt.x / chunk_size)
 	var pz :int = int(pt.z / chunk_size)
 	for x in range(px - chunk_radius, px + chunk_radius):
-		for z in range(pz - chunk_radius, pz + chunk_radius):
+		for z in range(pz - chunk_amount, pz):
 			add_chunk(x, z)
 
 func clean_up_chunks():
@@ -52,7 +54,7 @@ func add_chunk(x : int, z : int):
 
 func load_chunk(key: String, x : int, z : int):
 	var chunk : Node3D = chunk_scene.instantiate()
-	chunk.c_init(noise, x * chunk_size, z * chunk_size, chunk_size, 64, 64)
+	chunk.c_init(noise, x * chunk_size, z * chunk_size, chunk_size, chunk_subdivide, chunk_height)
 	chunk.position = Vector3(x * chunk_size, 0, z * chunk_size)
 	add_child(chunk)
 	created_chunks[key] = chunk
