@@ -41,9 +41,10 @@ func _ready():
 				x -= (48 + randf() * 128)
 			else:
 				x += (48 + randf() * 128)
-		enemy.position = Vector3(x, 2, $Camera3D.position.z - randf() * chunk_size) 
+		enemy.position = Vector3(x, 2, $Camera3D.position.z - randf() * chunk_size)
 		enemies.append(enemy)
 		add_child(enemy)
+		enemy.look_at($Camera3D.position)
 	
 	for i in range(0, box_car_count):
 		var train_car = train_car_scene.instantiate()
