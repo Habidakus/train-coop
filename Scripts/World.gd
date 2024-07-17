@@ -15,22 +15,31 @@ const meters_per_mile : float = 1609.34
 const meters_per_foot : float = 0.3048
 
 const chunk_size : int = 2048
-const chunk_amount : int = 4
+const chunk_amount : int = 2
 const chunk_radius : int = int(chunk_amount * 0.5);
-const chunk_subdivide : int = 96
+const chunk_subdivide : int = 32
 const chunk_height : float = 64
 
 var enemies = []
 var train_cars = []
 var existing_chunks = {}
-#var building_chunks = {}
-#var thread : Thread
+
+var mutex : Mutex
+var semaphore : Semaphore
+var thread : Thread
+var pending_chunks = {}
+var work_queue = []
 
 func _ready():
 	randomize()
 	noise.seed = randi()
 	$Camera3D.position.y = 45.0
 	$Camera3D.rotation_degrees.y = 60
+	
+	mutex = Mutex.new()
+	semaphore = Semaphore.new()
+	thread = Thread.new()
+	thread.start(run_builder_thread)
 	
 	for i in range(0, enemy_count):
 		var enemy = enemy_scene.instantiate()
@@ -83,7 +92,7 @@ func update_chunks():
 	var pt = $Camera3D.position
 	var px :int = int(pt.x / chunk_size)
 	var pz :int = int(pt.z / chunk_size)
-	for x in range(px - chunk_radius, px + chunk_radius):
+	for x in range(px - chunk_radius, 1 + px + chunk_radius):
 		for z in range(pz - 4 * chunk_amount, pz):
 			add_chunk(x, z)
 
@@ -94,33 +103,70 @@ func clean_up_chunks():
 	var all_keys = existing_chunks.keys()
 	for key in all_keys:
 		if key.y >= fadeZ:
+			existing_chunks[key].queue_free()
 			existing_chunks.erase(key)
 
 func reset_chunks():
 	pass
-	
+
 func add_chunk(x : int, z : int):
 	var key = Vector2i(x, z)
-	if existing_chunks.has(key): # || building_chunks.has(key):
+	if existing_chunks.has(key) || pending_chunks.has(key):
 		return
 	
-	load_chunk(key)
+	pending_chunks[key] = 1
+	#load_chunk(key)
+	
+	mutex.lock()
+	work_queue.append(key)
+	mutex.unlock()
+	
+	semaphore.post()
+
+func run_builder_thread():
+	
+	while true:
+		semaphore.wait()
+		
+		var found = true
+		while found:
+			var key
+			found = false
+			
+			mutex.lock()
+			if !work_queue.is_empty():
+				found = true
+				key = work_queue.pop_front()
+			mutex.unlock()
+		
+			if found:
+				var chunk : Node3D = chunk_scene.instantiate()
+				chunk.c_init(noise, key, chunk_size, chunk_subdivide, chunk_height, chunk_material)
+				call_deferred("load_chunk", key, chunk)
+
 	#if not thread.is_alive():
 	#	var callable = Callable(self, "load_chunk").bind(thread, x, z)
 	#	thread.start(callable)
 	#	building_chunks[key] = 1
 
-func load_chunk(key: Vector2i):
-	var chunk : Node3D = chunk_scene.instantiate()
-	chunk.c_init(noise, key, chunk_size, chunk_subdivide, chunk_height, chunk_material)
+func load_chunk(key: Vector2i, chunk):
 	chunk.position = Vector3(key.x * chunk_size, 0, key.y * chunk_size)
 	add_child(chunk)
 	existing_chunks[key] = chunk
+	pending_chunks.erase(key)
 	
 	for enemy in enemies:
 		if enemy.position.z > $Camera3D.position.z + chunk_size:
 			enemy.position.z = $Camera3D.position.z - (chunk_size + 2.0 * randf() * chunk_size)
 			enemy.position.y = 2 + chunk_height * chunk.get_height(enemy.position.x, enemy.position.z)
+			enemy.look_at($Camera3D.position)
+
+func load_chunk_old(key: Vector2i):
+	var chunk : Node3D = chunk_scene.instantiate()
+	chunk.c_init(noise, key, chunk_size, chunk_subdivide, chunk_height, chunk_material)
+	chunk.position = Vector3(key.x * chunk_size, 0, key.y * chunk_size)
+	add_child(chunk)
+	existing_chunks[key] = chunk
 
 func get_chunk(key : Vector2i):
 	if existing_chunks.has(key):
