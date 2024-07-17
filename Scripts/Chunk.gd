@@ -145,6 +145,12 @@ func generate_chunk():
 	mesh_instance.mesh = surface_tool.commit();
 	mesh_instance.set_surface_override_material(0, material)
 	mesh_instance.create_trimesh_collision()
+	var staticBody3d : StaticBody3D = StaticBody3D.new()
+	var cs : CollisionShape3D = CollisionShape3D.new()
+	cs.shape = mesh_instance.mesh.create_trimesh_shape()
+	staticBody3d.add_child(cs)
+	mesh_instance.add_child(staticBody3d)
+	#add_child(staticBody3d)
 	mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(mesh_instance)
 	

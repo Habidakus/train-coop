@@ -1,9 +1,10 @@
-[gd_scene load_steps=13 format=3 uid="uid://clroau2frju5j"]
+[gd_scene load_steps=14 format=3 uid="uid://clroau2frju5j"]
 
 [ext_resource type="Script" path="res://Scripts/World.gd" id="1_ii6my"]
 [ext_resource type="PackedScene" uid="uid://dockr54xmjfuy" path="res://Scenes/chunk.tscn" id="2_nxgqr"]
 [ext_resource type="PackedScene" uid="uid://m4jrc40o51q1" path="res://Scenes/train_car_cargo.tscn" id="3_dyul8"]
 [ext_resource type="PackedScene" uid="uid://s17v7b8mbot3" path="res://Scenes/enemy.tscn" id="4_7lre2"]
+[ext_resource type="PackedScene" uid="uid://d3hqofk0bdsum" path="res://Scenes/bullet.tscn" id="5_6x1xf"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_yj3jc"]
 frequency = 0.0035
@@ -53,7 +54,9 @@ noise = SubResource("FastNoiseLite_yj3jc")
 chunk_scene = ExtResource("2_nxgqr")
 train_car_scene = ExtResource("3_dyul8")
 enemy_scene = ExtResource("4_7lre2")
+bullet_scene = ExtResource("5_6x1xf")
 chunk_material = SubResource("StandardMaterial3D_gy0so")
+train_speed_miles_per_hour = 20.0
 box_car_spacing_feet = 58.0
 
 [node name="Camera3D" type="Camera3D" parent="."]

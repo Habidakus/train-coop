@@ -4,11 +4,16 @@ extends Node3D
 @export var chunk_scene : PackedScene
 @export var train_car_scene : PackedScene
 @export var enemy_scene : PackedScene
+@export var bullet_scene : PackedScene
 @export var chunk_material : Material
-@export var train_speed_miles_per_hour : float = 50
+@export var train_speed_miles_per_hour : float = 40
 @export var box_car_spacing_feet : float = 60
 @export var box_car_count : int = 4
 @export var enemy_count : int = 50
+@export var mouse_sensitivity : float = 1.5
+@export var turret_y_range : float = 40
+@export var turret_x_range_min : float = -14
+@export var turret_x_range_max : float = 12.5
 
 const units_per_meter : float = 10
 const meters_per_mile : float = 1609.34
@@ -29,6 +34,15 @@ var semaphore : Semaphore
 var thread : Thread
 var pending_chunks = {}
 var work_queue = []
+
+var turret_y_negative : bool = false
+var turret_y_positive : bool = false
+var turret_x_negative : bool = false
+var turret_x_positive : bool = false
+var turret_fire : bool = false
+var turret_y_accel : float = 0
+var turret_x_accel : float = 0
+var turret_cooldown : float = 0
 
 func _ready():
 	randomize()
@@ -81,13 +95,92 @@ func _process(_delta: float):
 		($DirectionalLight3D as DirectionalLight3D).rotation.y += _delta / 300.0
 	
 	var meters_per_second = meters_per_mile * train_speed_miles_per_hour / 3600.0
-	$Camera3D.rotation.y -= _delta / 10.0
 	$Camera3D.position.z -= meters_per_second * _delta * units_per_meter
+	#$Camera3D.rotation.y -= _delta / 10.0
 	#$Camera3D.rotation_degrees.y += _delta
+	if turret_y_negative != turret_y_positive:
+		if turret_y_positive:
+			turret_y_accel += _delta * mouse_sensitivity
+		if turret_y_negative:
+			turret_y_accel -= _delta * mouse_sensitivity
+			#$Camera3D.rotation.y -= _delta * mouse_sensitivity
+		turret_y_accel = clampf(turret_y_accel, -1, 1)
+	else:
+		if abs(turret_y_accel) < 0.05:
+			turret_y_accel = 0
+		else:
+			turret_y_accel = lerpf(turret_y_accel, 0, _delta * mouse_sensitivity * 2.0)
+			
+	if turret_x_negative != turret_x_positive:
+		if turret_x_positive:
+			turret_x_accel += _delta * mouse_sensitivity
+		if turret_x_negative:
+			turret_x_accel -= _delta * mouse_sensitivity
+		turret_x_accel = clampf(turret_x_accel, -1, 1)
+	else:
+		if abs(turret_x_accel) < 0.05:
+			turret_x_accel = 0
+		else:
+			turret_x_accel = lerpf(turret_y_accel, 0, _delta * mouse_sensitivity * 2.0)
+	
+	$Camera3D.rotation.y += turret_y_accel * _delta
+	#$Camera3D.rotation_degrees.y = clampf($Camera3D.rotation_degrees.y, 90 - turret_y_range, 90 + turret_y_range)
+	if $Camera3D.rotation_degrees.y > 90 + turret_y_range:
+		$Camera3D.rotation_degrees.y = 90 + turret_y_range
+		turret_y_accel = 0
+	elif $Camera3D.rotation_degrees.y < 90 - turret_y_range:
+		$Camera3D.rotation_degrees.y = 90 - turret_y_range
+		turret_y_accel = 0
+	$Camera3D.rotation.x += turret_x_accel * _delta
+	#$Camera3D.rotation_degrees.x = clampf($Camera3D.rotation_degrees.x, turret_x_range_min, turret_x_range_max)
+	if $Camera3D.rotation_degrees.x > turret_x_range_max:
+		$Camera3D.rotation_degrees.x = turret_x_range_max
+		turret_x_accel = 0
+	elif $Camera3D.rotation_degrees.x < turret_x_range_min:
+		$Camera3D.rotation_degrees.x = turret_x_range_min
+		turret_x_accel = 0
+	
+	turret_cooldown -= _delta
+	if turret_fire and turret_cooldown <= 0:
+		var bullet : Node3D = bullet_scene.instantiate()
+		bullet.rotation = $Camera3D.rotation
+		bullet.position = $Camera3D.position
+		add_child(bullet)
+		turret_cooldown = 0.5
+	
 	var box_car_spacing_meters : float = box_car_spacing_feet * meters_per_foot
 	for i in range(0, box_car_count):
 		train_cars[i].position = Vector3($Camera3D.position.x, 0, $Camera3D.position.z - i * box_car_spacing_meters * units_per_meter)
-	
+
+func _input(event):
+	#if event is InputEventMouseMotion:
+	#	$Camera3D.rotation.y -= event.relative.x / mouse_sensitivity
+	#	$Camera3D.rotation.x -= event.relative.y / mouse_sensitivity
+	if event is InputEventKey:
+		var iek = event as InputEventKey
+		if iek.is_pressed():
+			if iek.keycode == KEY_D:
+				turret_y_negative = true
+			if iek.keycode == KEY_A:
+				turret_y_positive = true
+			if iek.keycode == KEY_S:
+				turret_x_negative = true
+			if iek.keycode == KEY_W:
+				turret_x_positive = true
+			if iek.keycode == KEY_SPACE:
+				turret_fire = true
+		if iek.is_released():
+			if iek.keycode == KEY_D:
+				turret_y_negative = false
+			if iek.keycode == KEY_A:
+				turret_y_positive = false
+			if iek.keycode == KEY_S:
+				turret_x_negative = false
+			if iek.keycode == KEY_W:
+				turret_x_positive = false
+			if iek.keycode == KEY_SPACE:
+				turret_fire = false
+
 func update_chunks():
 	var pt = $Camera3D.position
 	var px :int = int(pt.x / chunk_size)

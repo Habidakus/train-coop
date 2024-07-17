@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3 uid="uid://d3hqofk0bdsum"]
+
+[ext_resource type="Script" path="res://Scripts/Bullet.gd" id="1_hvcxf"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_y5kdw"]
+emission = Color(1, 1, 1, 1)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_w7d51"]
+
+[node name="Bullet" type="Node3D"]
+script = ExtResource("1_hvcxf")
+
+[node name="CSGSphere3D" type="CSGSphere3D" parent="."]
+radius = 1.89
+smooth_faces = false
+material = SubResource("StandardMaterial3D_y5kdw")
+
+[node name="RayCast3D" type="RayCast3D" parent="."]
+
+[node name="RigidBody3D" type="RigidBody3D" parent="."]
+gravity_scale = 0.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
+shape = SubResource("SphereShape3D_w7d51")
