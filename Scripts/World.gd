@@ -8,7 +8,7 @@ extends Node3D
 @export var chunk_material : Material
 @export var train_speed_miles_per_hour : float = 40
 @export var box_car_spacing_feet : float = 60
-@export var box_car_count : int = 4
+@export var box_car_count : int = 6
 @export var enemy_count : int = 50
 @export var mouse_sensitivity : float = 1.5
 @export var turret_y_range : float = 40
@@ -22,7 +22,7 @@ const meters_per_foot : float = 0.3048
 const chunk_size : int = 2048
 const chunk_amount : int = 2
 const chunk_radius : int = int(chunk_amount * 0.5);
-const chunk_subdivide : int = 32
+const chunk_subdivide : int = 64
 const chunk_height : float = 64
 
 var enemies = []
@@ -75,8 +75,7 @@ func _ready():
 		train_car.find_child("Model").scale *= units_per_meter
 		train_cars.append(train_car)
 		add_child(train_car)
-		var box_car_spacing_meters : float = box_car_spacing_feet * meters_per_foot
-		train_car.position = Vector3($Camera3D.position.x, 0, $Camera3D.position.z - i * box_car_spacing_meters * units_per_meter)
+		place_box_car(train_car, i)
 		
 	for z in range(-1, 1):
 		add_chunk(-1, z)
@@ -84,6 +83,11 @@ func _ready():
 		add_chunk(1, z)
 	
 	#thread = Thread.new()
+
+func place_box_car(train_car, car_number : int):
+	var box_car_spacing_meters : float = box_car_spacing_feet * meters_per_foot
+	var relative_car_number : int = car_number - int(float(box_car_count) / 2.0)
+	train_car.position = Vector3($Camera3D.position.x, 0, $Camera3D.position.z - relative_car_number * box_car_spacing_meters * units_per_meter)
 
 func _process(_delta: float):
 	update_chunks()
@@ -148,9 +152,8 @@ func _process(_delta: float):
 		add_child(bullet)
 		turret_cooldown = 0.5
 	
-	var box_car_spacing_meters : float = box_car_spacing_feet * meters_per_foot
 	for i in range(0, box_car_count):
-		train_cars[i].position = Vector3($Camera3D.position.x, 0, $Camera3D.position.z - i * box_car_spacing_meters * units_per_meter)
+		place_box_car(train_cars[i], i)
 
 func _input(event):
 	#if event is InputEventMouseMotion:
@@ -234,7 +237,12 @@ func run_builder_thread():
 		
 			if found:
 				var chunk : Node3D = chunk_scene.instantiate()
-				chunk.c_init(noise, key, chunk_size, chunk_subdivide, chunk_height, chunk_material)
+				var subdivide = chunk_subdivide
+				var reduce = key.x
+				while reduce > 0:
+					reduce -= 1
+					subdivide = int(float(subdivide + 1) / 2.0)
+				chunk.c_init(noise, key, chunk_size, subdivide, chunk_height, chunk_material)
 				call_deferred("load_chunk", key, chunk)
 
 	#if not thread.is_alive():
@@ -253,13 +261,6 @@ func load_chunk(key: Vector2i, chunk):
 			enemy.position.z = $Camera3D.position.z - (chunk_size + 2.0 * randf() * chunk_size)
 			enemy.position.y = 2 + chunk_height * chunk.get_height(enemy.position.x, enemy.position.z)
 			enemy.look_at($Camera3D.position)
-
-func load_chunk_old(key: Vector2i):
-	var chunk : Node3D = chunk_scene.instantiate()
-	chunk.c_init(noise, key, chunk_size, chunk_subdivide, chunk_height, chunk_material)
-	chunk.position = Vector3(key.x * chunk_size, 0, key.y * chunk_size)
-	add_child(chunk)
-	existing_chunks[key] = chunk
 
 func get_chunk(key : Vector2i):
 	if existing_chunks.has(key):

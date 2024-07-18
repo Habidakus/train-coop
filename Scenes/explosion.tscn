@@ -180,5 +180,3 @@ interpolate = false
 fract_delta = false
 process_material = SubResource("ParticleProcessMaterial_fotw8")
 draw_pass_1 = SubResource("PointMesh_cghmh")
-
-[connection signal="finished" from="Smoke" to="." method="_on_smoke_finished"]
