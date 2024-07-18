@@ -1,5 +1,7 @@
 extends Node3D
 
+@export var explosion_scene : PackedScene
+
 var lifetime : float = 2
 var speed : float = 500
 var time_to_explode : float = 1000
@@ -45,6 +47,7 @@ func _process(delta):
 	#self.translate(get_global_transform().basis.z.normalized() * delta * -300)
 	if time_to_explode < 0:
 		print("Bullet exploded: pos = ", position, " rot = ", rotation_degrees)
+		explode(position)
 		queue_free()
 	if lifetime < 0:
 		print("Bullet removed: pos = ", position, "  rot = ", rotation_degrees)
@@ -60,7 +63,13 @@ func _physics_process(delta):
 		var pos : Vector3 = result["position"]
 		var distance = (pos - global_position).length()
 		if distance <= travel_length:
-			print("Bullet collision at ", result["position"], " against ", result["collider"])
+			print("Bullet collision at ", pos, " against ", result["collider"])
+			explode(pos)
 			queue_free()
 		else:
 			time_to_explode = distance / speed
+
+func explode(pos : Vector3):
+	var explosion = explosion_scene.instantiate()
+	explosion.position = pos
+	get_parent().add_child(explosion)

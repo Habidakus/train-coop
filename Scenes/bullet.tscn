@@ -1,6 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://d3hqofk0bdsum"]
+[gd_scene load_steps=5 format=3 uid="uid://d3hqofk0bdsum"]
 
 [ext_resource type="Script" path="res://Scripts/Bullet.gd" id="1_hvcxf"]
+[ext_resource type="PackedScene" uid="uid://4giscsed4tfl" path="res://Scenes/explosion.tscn" id="2_wcd2q"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_y5kdw"]
 emission = Color(1, 1, 1, 1)
@@ -9,6 +10,7 @@ emission = Color(1, 1, 1, 1)
 
 [node name="Bullet" type="Node3D"]
 script = ExtResource("1_hvcxf")
+explosion_scene = ExtResource("2_wcd2q")
 
 [node name="CSGSphere3D" type="CSGSphere3D" parent="."]
 radius = 1.89
