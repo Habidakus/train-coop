@@ -5,6 +5,7 @@ extends Node3D
 @export var train_car_scene : PackedScene
 @export var enemy_scene : PackedScene
 @export var bullet_scene : PackedScene
+@export var reticule_scene : PackedScene
 @export var chunk_material : Material
 @export var train_speed_miles_per_hour : float = 40
 @export var box_car_spacing_feet : float = 60
@@ -43,6 +44,7 @@ var turret_fire : bool = false
 var turret_y_accel : float = 0
 var turret_x_accel : float = 0
 var turret_cooldown : float = 0
+var turret_reticule : Decal
 
 func _ready():
 	randomize()
@@ -54,6 +56,10 @@ func _ready():
 	semaphore = Semaphore.new()
 	thread = Thread.new()
 	thread.start(run_builder_thread)
+	turret_reticule = reticule_scene.instantiate()
+	turret_reticule.scale *= units_per_meter
+	add_child(turret_reticule)
+	move_reticule($Camera3D)
 	
 	for i in range(0, enemy_count):
 		var enemy = enemy_scene.instantiate()
@@ -154,6 +160,25 @@ func _process(_delta: float):
 	
 	for i in range(0, box_car_count):
 		place_box_car(train_cars[i], i)
+	
+	move_reticule($Camera3D)
+
+func move_reticule(aimer : Node3D) -> void:
+	var space_state = get_world_3d().direct_space_state
+	var start_point = aimer.global_position
+	var end_point = -1 * 2000 * aimer.get_global_transform().basis.z.normalized() + start_point
+	var query = PhysicsRayQueryParameters3D.create(start_point, end_point)
+	var result : Dictionary = space_state.intersect_ray(query)
+	if !result.is_empty():
+		var pos : Vector3 = result["position"]
+		var norm : Vector3 = result["normal"]
+		turret_reticule.position = pos
+		turret_reticule.look_at(turret_reticule.global_transform.origin + norm, Vector3.UP)
+		if norm != Vector3.UP and norm != Vector3.DOWN:
+			turret_reticule.rotate_object_local(Vector3(1, 0, 0), 90)
+		turret_reticule.show()
+	else:
+		turret_reticule.hide()
 
 func _input(event):
 	#if event is InputEventMouseMotion:

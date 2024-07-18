@@ -13,14 +13,16 @@ script = ExtResource("1_hvcxf")
 explosion_scene = ExtResource("2_wcd2q")
 
 [node name="CSGSphere3D" type="CSGSphere3D" parent="."]
-radius = 1.89
+radius = 1.0
 smooth_faces = false
 material = SubResource("StandardMaterial3D_y5kdw")
 
 [node name="RayCast3D" type="RayCast3D" parent="."]
+visible = false
 
 [node name="RigidBody3D" type="RigidBody3D" parent="."]
 gravity_scale = 0.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("SphereShape3D_w7d51")
