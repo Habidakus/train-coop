@@ -63,7 +63,8 @@ func _ready():
 	
 	for i in range(0, enemy_count):
 		var enemy = enemy_scene.instantiate()
-		enemy.find_child("Model").scale *= units_per_meter
+		#enemy.find_child("Model").scale *= units_per_meter
+		enemy.find_child("Cube").scale *= units_per_meter
 		var x : float = randf() * 4096.0 - 2048.0
 		if abs(x) < 48:
 			if x < 0:

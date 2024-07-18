@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=3 uid="uid://c6h3s5icbhjo3"]
+
+[ext_resource type="PackedScene" uid="uid://dyb22uarylggx" path="res://models/tank02.blend" id="1_d137a"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cmlb6"]
+albedo_color = Color(0.670588, 0.670588, 0.670588, 1)
+metallic = 0.91
+roughness = 0.11
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_djv4i"]
+albedo_color = Color(0.211765, 0.211765, 0.211765, 1)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_d4vli"]
+points = PackedVector3Array(-0.892942, -0.44902, -2.05, 0.857696, -0.29975, 1.69054, -1.03095, -0.0848999, 1.44726, 0.853166, 0.36949, -1.88089, -0.102239, 0.595796, 1.01442, -1.03095, 0.472044, -0.966293, 0.906545, -0.435219, -1.9911, -0.962844, -0.540825, 1.51785, 1.01206, 0.472044, -0.966293, 0.93485, -0.535588, 1.55978, -0.816328, 0.36949, -1.88089, 0.921762, -0.528056, -1.3412, 1.01206, -0.0848999, 1.44726, -0.940657, -0.528056, -1.3412, -0.918364, -0.490465, 1.77679, 0.083144, 0.595796, 1.01442, 0.954473, -0.488548, -1.55974, -1.03095, -0.146834, 1.57137, 0.911927, -0.497295, 1.80251, -0.881726, 0.373541, -1.84443, 0.954473, 0.387435, -1.55974, 0.083144, 0.595796, 0.890702, -0.876591, -0.29975, 1.69054, 1.01206, 0.41011, -0.656793, -1.03095, 0.41011, -0.656793, 0.865121, -0.471632, -1.84901, 1.01206, 0.0387374, 0.952369, -1.03095, 0.0387374, 0.952369, -0.888103, -0.530482, 1.60066, -0.102239, 0.595796, 0.890702)
+
+[node name="TankTwo" instance=ExtResource("1_d137a")]
+transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, 1.25581)
+
+[node name="Cube" parent="." index="0"]
+transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.549318, 1.14998)
+surface_material_override/0 = SubResource("StandardMaterial3D_cmlb6")
+surface_material_override/1 = SubResource("StandardMaterial3D_djv4i")
+
+[node name="RigidBody3D" type="RigidBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="RigidBody3D" index="0"]
+transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.549318, 1.14998)
+shape = SubResource("ConvexPolygonShape3D_d4vli")
