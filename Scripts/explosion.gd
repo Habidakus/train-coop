@@ -7,6 +7,7 @@ func _ready():
 	$Debris.emitting = true
 	$Fire.emitting = true
 	$Smoke.emitting = true
+	$Sparks.emitting = true
 	pass # Replace with function body.
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
