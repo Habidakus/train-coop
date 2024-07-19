@@ -17,6 +17,7 @@ func c_init(inoise : Noise, key : Vector2i, ichunk_size : float, isubdivide : in
 	subdivide = isubdivide
 	height = iheight
 	material = imaterial
+	name = str("ground_mesh_(", key.x, ",", key.y, ")")
 
 # Called when the node enters the scene tree for the first time.
 func _ready():

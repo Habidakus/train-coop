@@ -64,22 +64,24 @@ func _ready():
 	for i in range(0, enemy_count):
 		var enemy = enemy_scene.instantiate()
 		#enemy.find_child("Model").scale *= units_per_meter
-		enemy.find_child("Cube").scale *= units_per_meter
+		enemy.scale *= units_per_meter
+		#enemy.find_child("Cube").scale *= units_per_meter
 		var x : float = randf() * 4096.0 - 2048.0
 		if abs(x) < 48:
 			if x < 0:
 				x -= (48 + randf() * 128)
 			else:
 				x += (48 + randf() * 128)
-		enemy.position = Vector3(x, 2, $Camera3D.position.z - randf() * chunk_size)
+		enemy.position = Vector3(x, 10, $Camera3D.position.z - randf() * chunk_size)
 		enemies.append(enemy)
 		add_child(enemy)
 		enemy.look_at($Camera3D.position)
 	
 	for i in range(0, box_car_count):
 		var train_car = train_car_scene.instantiate()
-		train_car.find_child("CSGBox3D").scale *= units_per_meter
-		train_car.find_child("Model").scale *= units_per_meter
+		train_car.scale *= units_per_meter
+		#train_car.find_child("CSGBox3D").scale *= units_per_meter
+		#train_car.find_child("Model").scale *= units_per_meter
 		train_cars.append(train_car)
 		add_child(train_car)
 		place_box_car(train_car, i)

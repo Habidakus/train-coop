@@ -58,7 +58,7 @@ enemy_scene = ExtResource("4_ppkjr")
 bullet_scene = ExtResource("5_6x1xf")
 reticule_scene = ExtResource("6_nl3rw")
 chunk_material = SubResource("StandardMaterial3D_gy0so")
-train_speed_miles_per_hour = 5.0
+train_speed_miles_per_hour = 15.0
 box_car_spacing_feet = 58.0
 turret_x_range_min = -20.0
 

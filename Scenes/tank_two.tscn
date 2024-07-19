@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://c6h3s5icbhjo3"]
+[gd_scene load_steps=6 format=3 uid="uid://c6h3s5icbhjo3"]
 
 [ext_resource type="PackedScene" uid="uid://dyb22uarylggx" path="res://models/tank02.blend" id="1_d137a"]
+[ext_resource type="Script" path="res://Scripts/tank_two.gd" id="2_h02uc"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cmlb6"]
 albedo_color = Color(0.670588, 0.670588, 0.670588, 1)
@@ -15,14 +16,15 @@ points = PackedVector3Array(-0.892942, -0.44902, -2.05, 0.857696, -0.29975, 1.69
 
 [node name="TankTwo" instance=ExtResource("1_d137a")]
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, 1.25581)
+script = ExtResource("2_h02uc")
 
 [node name="Cube" parent="." index="0"]
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.549318, 1.14998)
 surface_material_override/0 = SubResource("StandardMaterial3D_cmlb6")
 surface_material_override/1 = SubResource("StandardMaterial3D_djv4i")
 
-[node name="RigidBody3D" type="RigidBody3D" parent="." index="1"]
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
 
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="RigidBody3D" index="0"]
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="StaticBody3D" index="0"]
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.549318, 1.14998)
 shape = SubResource("ConvexPolygonShape3D_d4vli")
