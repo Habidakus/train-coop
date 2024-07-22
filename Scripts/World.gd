@@ -75,8 +75,8 @@ func _ready():
 				x += (48 + randf() * 128)
 		enemy.position = Vector3(x, 10, $Camera3D.position.z - randf() * chunk_size)
 		enemies.append(enemy)
+		enemy.assign_train_info(self)
 		add_child(enemy)
-		enemy.look_at($Camera3D.position)
 	
 	for i in range(0, box_car_count):
 		var train_car
@@ -96,11 +96,25 @@ func _ready():
 	
 	#thread = Thread.new()
 
+func get_train_start_z() -> float:
+	return get_box_car_position(0).z
+
+func get_train_end_z() -> float:
+	return get_box_car_position(box_car_count - 1).z
+
 func place_box_car(train_car, car_number : int):
+	train_car.position = get_box_car_position(car_number)
+
+func get_box_car_position(car_number: int) -> Vector3:
 	var box_car_spacing_meters : float = box_car_spacing_feet * meters_per_foot
 	var relative_car_number : int = int(float(box_car_count - 1) / 2.0) - car_number
-	train_car.position = Vector3($Camera3D.position.x, 0, $Camera3D.position.z - relative_car_number * box_car_spacing_meters * units_per_meter)
+	return Vector3($Camera3D.position.x, 0, $Camera3D.position.z - relative_car_number * box_car_spacing_meters * units_per_meter)
 
+
+func get_speed() -> float:
+	var meters_per_second = meters_per_mile * train_speed_miles_per_hour / 3600.0
+	return meters_per_second * units_per_meter
+	
 func _process(_delta: float):
 	update_chunks()
 	clean_up_chunks()
@@ -110,8 +124,7 @@ func _process(_delta: float):
 		($DirectionalLight3D as DirectionalLight3D).rotation.x -= _delta / 300.0
 		($DirectionalLight3D as DirectionalLight3D).rotation.y += _delta / 300.0
 	
-	var meters_per_second = meters_per_mile * train_speed_miles_per_hour / 3600.0
-	$Camera3D.position.z -= meters_per_second * _delta * units_per_meter
+	$Camera3D.position.z -= get_speed() * _delta
 	#$Camera3D.rotation.y -= _delta / 10.0
 	#$Camera3D.rotation_degrees.y += _delta
 	if turret_y_negative != turret_y_positive:
@@ -286,12 +299,6 @@ func load_chunk(key: Vector2i, chunk):
 	add_child(chunk)
 	existing_chunks[key] = chunk
 	pending_chunks.erase(key)
-	
-	for enemy in enemies:
-		if enemy.position.z > $Camera3D.position.z + chunk_size:
-			enemy.position.z = $Camera3D.position.z - (chunk_size + 2.0 * randf() * chunk_size)
-			enemy.position.y = 2 + chunk_height * chunk.get_height(enemy.position.x, enemy.position.z)
-			enemy.look_at($Camera3D.position)
 
 func get_chunk(key : Vector2i):
 	if existing_chunks.has(key):
