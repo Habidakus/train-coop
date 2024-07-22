@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://m4jrc40o51q1"]
+[gd_scene load_steps=2 format=3 uid="uid://m4jrc40o51q1"]
 
 [ext_resource type="PackedScene" uid="uid://b3v8ldq54ucby" path="res://models/trainCar_01.blend" id="1_ai54s"]
-[ext_resource type="PackedScene" uid="uid://dyb22uarylggx" path="res://models/tank02.blend" id="2_4b1sv"]
 
 [node name="trainCarCargo" type="Node3D"]
 
@@ -12,7 +11,3 @@ size = Vector3(3, 3, 16.5)
 
 [node name="Model" parent="." instance=ExtResource("1_ai54s")]
 transform = Transform3D(0.775, 0, 0, 0, 0.775, 0, 0, 0, 0.775, 0, 0, 0)
-
-[node name="tank02" parent="." instance=ExtResource("2_4b1sv")]
-transform = Transform3D(20, 0, 0, 0, 20, 0, 0, 0, 20, 0, 0, 0)
-visible = false

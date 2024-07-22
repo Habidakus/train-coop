@@ -114,10 +114,17 @@ func generate_chunk():
 	if error != 0:
 		print("Error: ", error)
 	
+	var lowz = float(int(z) - int(chunk_size / 2.0))
+	
 	for i in range(data_tool.get_vertex_count()):
 		var vertex = data_tool.get_vertex(i)
 		var dx = vertex.x + x
 		var dz = vertex.z + z
+		
+		var ab = abs(dz - lowz)
+		if ab < 0.1 && ab > 0.0:
+			dz = lowz
+		
 		var dy = get_height(dx, dz)
 		vertex.y = dy * height
 		data_tool.set_vertex(i, vertex)

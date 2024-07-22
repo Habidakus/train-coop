@@ -2,6 +2,7 @@ extends Node3D
 
 @export var noise : Noise
 @export var chunk_scene : PackedScene
+@export var locomotive_scene : PackedScene
 @export var train_car_scene : PackedScene
 @export var enemy_scene : PackedScene
 @export var bullet_scene : PackedScene
@@ -9,7 +10,7 @@ extends Node3D
 @export var chunk_material : Material
 @export var train_speed_miles_per_hour : float = 40
 @export var box_car_spacing_feet : float = 60
-@export var box_car_count : int = 6
+@export var box_car_count : int = 2
 @export var enemy_count : int = 50
 @export var mouse_sensitivity : float = 1.5
 @export var turret_y_range : float = 40
@@ -23,7 +24,7 @@ const meters_per_foot : float = 0.3048
 const chunk_size : int = 2048
 const chunk_amount : int = 2
 const chunk_radius : int = int(chunk_amount * 0.5);
-const chunk_subdivide : int = 64
+const chunk_subdivide : int = 32
 const chunk_height : float = 64
 
 var enemies = []
@@ -78,10 +79,12 @@ func _ready():
 		enemy.look_at($Camera3D.position)
 	
 	for i in range(0, box_car_count):
-		var train_car = train_car_scene.instantiate()
+		var train_car
+		if i > 0:
+			train_car = train_car_scene.instantiate()
+		else:
+			train_car = locomotive_scene.instantiate()
 		train_car.scale *= units_per_meter
-		#train_car.find_child("CSGBox3D").scale *= units_per_meter
-		#train_car.find_child("Model").scale *= units_per_meter
 		train_cars.append(train_car)
 		add_child(train_car)
 		place_box_car(train_car, i)
@@ -95,7 +98,7 @@ func _ready():
 
 func place_box_car(train_car, car_number : int):
 	var box_car_spacing_meters : float = box_car_spacing_feet * meters_per_foot
-	var relative_car_number : int = car_number - int(float(box_car_count) / 2.0)
+	var relative_car_number : int = int(float(box_car_count) / 2.0) - car_number
 	train_car.position = Vector3($Camera3D.position.x, 0, $Camera3D.position.z - relative_car_number * box_car_spacing_meters * units_per_meter)
 
 func _process(_delta: float):
@@ -134,7 +137,7 @@ func _process(_delta: float):
 		if abs(turret_x_accel) < 0.05:
 			turret_x_accel = 0
 		else:
-			turret_x_accel = lerpf(turret_y_accel, 0, _delta * mouse_sensitivity * 2.0)
+			turret_x_accel = lerpf(turret_x_accel, 0, _delta * mouse_sensitivity * 2.0)
 	
 	$Camera3D.rotation.y += turret_y_accel * _delta
 	#$Camera3D.rotation_degrees.y = clampf($Camera3D.rotation_degrees.y, 90 - turret_y_range, 90 + turret_y_range)
