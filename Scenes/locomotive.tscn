@@ -101,13 +101,15 @@ shadow_mesh = SubResource("ArrayMesh_8wews")
 points = PackedVector3Array(8.24247, -1.31459, 1.32693, -5.94653, -1.44439, -1.58331, -5.991, 1.15416, -1.59373, -6.55857, 1.26943, 1.79677, 8.47797, 1.26943, -1.4918, -6.55857, -1.54958, 1.79677, 7.79205, -1.64497, -0.925526, 8.10218, 1.19311, 1.26235, 8.24247, -1.31459, -1.4918, 8.47797, -1.78427, 1.092, -6.55857, -1.78427, 1.092, -3.26896, -1.54958, -1.72673, -3.26896, 1.26943, -1.72673, -3.50299, 1.26943, 1.79677, 8.47797, 0.799741, 1.32693, -3.50299, -1.54958, 1.79677, -5.87265, -1.64497, -0.925526, 8.47797, 0.799741, -1.4918)
 
 [node name="Locomotive" type="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.19209e-06)
 
 [node name="Cube" type="MeshInstance3D" parent="."]
-transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -0.157713, 1.66711, 0)
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -0.158, 1.667, 1)
 mesh = SubResource("ArrayMesh_20onw")
 skeleton = NodePath("")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
 transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -0.157713, 1.66711, 0)

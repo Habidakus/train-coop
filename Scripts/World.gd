@@ -10,7 +10,7 @@ extends Node3D
 @export var chunk_material : Material
 @export var train_speed_miles_per_hour : float = 40
 @export var box_car_spacing_feet : float = 60
-@export var box_car_count : int = 2
+@export var box_car_count : int = 4
 @export var enemy_count : int = 50
 @export var mouse_sensitivity : float = 1.5
 @export var turret_y_range : float = 40
@@ -98,7 +98,7 @@ func _ready():
 
 func place_box_car(train_car, car_number : int):
 	var box_car_spacing_meters : float = box_car_spacing_feet * meters_per_foot
-	var relative_car_number : int = int(float(box_car_count) / 2.0) - car_number
+	var relative_car_number : int = int(float(box_car_count - 1) / 2.0) - car_number
 	train_car.position = Vector3($Camera3D.position.x, 0, $Camera3D.position.z - relative_car_number * box_car_spacing_meters * units_per_meter)
 
 func _process(_delta: float):
