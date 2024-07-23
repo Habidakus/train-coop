@@ -128,17 +128,29 @@ func _process(_delta):
 			return
 
 		#TODO: Avoid other tanks and the train
-		var goal_pos : Vector3 = get_ground_pos(Vector3(global_position.x, global_position.y + 2.5, goal_z)) + Vector3.UP * float_height
-		var dot = (goal_pos - global_transform.origin).normalized().dot(get_global_transform().basis.z.normalized() * -1)
+		var goal_pos : Vector3 = get_ground_pos(Vector3(global_position.x, global_position.y + float_height, goal_z)) + Vector3.UP * float_height
 		
-		turn_to(goal_pos, _delta)
+		speed = lerp(speed, world.get_speed() * 1.5, _delta)
+		
+		# If we're too close or too far from the tracks, adjust
+		var dist_from_tracks = abs(global_position.x)
+		var sign_of_x = 1
+		if dist_from_tracks > 0:
+			sign_of_x = global_position.x / dist_from_tracks
+		if dist_from_tracks < 96:
+			goal_pos = Vector3(sign_of_x * 160, global_position.y + float_height, global_position.z - 1)
+		elif abs(global_position.x) > 256:
+			goal_pos = Vector3(0, global_position.y + float_height, global_position.z - 1)
+				
+		var dot = (goal_pos - global_transform.origin).normalized().dot(get_global_transform().basis.z.normalized() * -1)
 		if dot < 0:
 			speed = 0
-		else:
-			speed = lerp(speed, world.get_speed() * 1.5, _delta)
+		
+		turn_to(goal_pos, _delta)
+		
 		#global_position += (goal_pos - global_position).normalized() * world.get_speed() * 1.5 * _delta
-		if name == "tank2":
-			print("advancing: z=", position.z, " dot=", dot, " speed=", speed)
+		#if name == "tank2":
+		#	print("advancing: z=", position.z, " dot=", dot, " speed=", speed)
 		return
 	
 	if state_aiming:
@@ -149,13 +161,13 @@ func _process(_delta):
 		var target_pos = Vector3(0, global_pos.y, world.get_train_start_z())
 		turn_to(target_pos, _delta)
 		
-		if name == "tank2":
+		#if name == "tank2":
 			#var dot = (target_pos - global_pos).normalized().dot(get_global_transform().basis.z.normalized() * -1)
-			var cross_front = (target_pos - global_pos).normalized().cross(get_global_transform().basis.z.normalized() * -1)
-			var end_pos = Vector3(0, global_pos.y, world.get_train_end_z())
-			var cross_end = (end_pos - global_pos).normalized().cross(get_global_transform().basis.z.normalized() * -1)
+			#var cross_front = (target_pos - global_pos).normalized().cross(get_global_transform().basis.z.normalized() * -1)
+			#var end_pos = Vector3(0, global_pos.y, world.get_train_end_z())
+			#var cross_end = (end_pos - global_pos).normalized().cross(get_global_transform().basis.z.normalized() * -1)
 			
-			print("turning: rot=", rotation_degrees.y, " front=", cross_front, " end=", cross_end)
+			#print("turning: rot=", rotation_degrees.y, " front=", cross_front, " end=", cross_end)
 		
 		#var n : Transform3D = global_transform.looking_at()
 		if aim_time <= 0:
@@ -173,9 +185,14 @@ func turn_to(target_pos : Vector3, delta : float):
 	
 	var current_rotation : Quaternion = global_transform.basis.get_rotation_quaternion();
 	var rotation_difference: Quaternion = target_quaternion * current_rotation.inverse()
-	var amount_of_roation_needed : float = abs(rotation_difference.get_angle())
-	if amount_of_roation_needed < 0.01:
+	var amount_of_roation_needed : float = rotation_difference.get_angle()
+	if abs(amount_of_roation_needed) < 0.01:
 		return
+		
+	if amount_of_roation_needed > PI:
+		amount_of_roation_needed = amount_of_roation_needed - TAU
+	elif amount_of_roation_needed < -PI:
+		amount_of_roation_needed = TAU + amount_of_roation_needed
 	
 	var rotation_this_impulse: float = rotation_speed * delta
 
@@ -183,7 +200,7 @@ func turn_to(target_pos : Vector3, delta : float):
 	var s = scale
 	
 	# Apply the incremental rotation
-	var fraction = rotation_this_impulse / amount_of_roation_needed;
+	var fraction = abs(rotation_this_impulse / amount_of_roation_needed);
 	if fraction < 1.0:
 		var wrotation = current_rotation.slerp(target_quaternion, fraction)
 		global_transform = Transform3D(Basis(wrotation), global_transform.origin)
