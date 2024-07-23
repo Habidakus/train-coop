@@ -35,6 +35,34 @@ func on_hit() -> void:
 func is_dead() -> bool:
 	return state_dead
 
+func start_resurection() -> void:
+	pass
+
+var closest_other_tank_1 : Node3D = null
+var closest_other_tank_2 : Node3D = null
+func consider_other(other : Node3D, distSqrd : float) -> void:
+	if closest_other_tank_1 == null:
+		closest_other_tank_1 = other
+		return
+	var d21s : float = global_position.distance_squared_to(closest_other_tank_1.global_position)
+	if closest_other_tank_2 == null:
+		closest_other_tank_2 = other
+		if d21s > distSqrd:
+			# New tank is the closest, so it gets moved to #1
+			closest_other_tank_2 = closest_other_tank_1
+			closest_other_tank_1 = other
+		else:
+			# New tank isn't as close a #1
+			closest_other_tank_2 = other
+		return
+	if d21s > distSqrd:
+		closest_other_tank_2 = closest_other_tank_1
+		closest_other_tank_1 = other
+		return
+	var d22s : float = global_position.distance_squared_to(closest_other_tank_2.global_position)
+	if d22s > distSqrd:
+		closest_other_tank_2 = other
+
 func determine_world_object(object):
 	if not object is Node:
 		return null
@@ -48,6 +76,9 @@ func determine_world_object(object):
 	
 func assign_train_info(_world: Node3D):
 	world = _world
+
+func get_rid():
+	return $StaticBody3D.get_rid()
 	
 func get_ground_pos(pos : Vector3):
 	var start_point = pos + Vector3.UP * 64
@@ -57,6 +88,10 @@ func get_ground_pos(pos : Vector3):
 
 	# TODO: We should make sure we're only testing against ground, not just anything that isn't ourselves
 	query.exclude = [$StaticBody3D.get_rid()]
+	if closest_other_tank_1 != null:
+		query.exclude.append(closest_other_tank_1.get_rid())
+	if closest_other_tank_2 != null:
+		query.exclude.append(closest_other_tank_2.get_rid())
 
 	var result : Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
 	if result.is_empty():
@@ -70,6 +105,55 @@ func self_destruct():
 	state_aiming = false
 	state_advancing = false
 	print(name, " self destructing")
+
+func handle_state_advancing(delta : float) -> void:
+	var goal_z = world.get_train_start_z()
+	if position.z < goal_z:
+		state_advancing = false
+		state_aiming = true
+		aim_time = max_aim_time
+		#pre_aim_rotation = rotation
+		return
+
+	#TODO: Avoid other tanks and the train
+	var goal_pos : Vector3 = get_ground_pos(Vector3(global_position.x, global_position.y + float_height, goal_z)) + Vector3.UP * float_height
+	
+	speed = lerp(speed, world.get_speed() * 1.5, delta)
+	
+	# If we're too close or too far from the tracks, adjust
+	var dist_from_tracks = abs(global_position.x)
+	var sign_of_x = 1
+	if dist_from_tracks > 0:
+		sign_of_x = global_position.x / dist_from_tracks
+	if dist_from_tracks < 96:
+		goal_pos = Vector3(sign_of_x * 160, global_position.y + float_height, global_position.z - 1)
+	elif abs(global_position.x) > 256:
+		goal_pos = Vector3(0, global_position.y + float_height, global_position.z - 1)
+
+	var goal_vec : Vector3 = Vector3(goal_pos.x - global_transform.origin.x, 0, goal_pos.z - global_transform.origin.z).normalized() + avoid_vector(closest_other_tank_1) + avoid_vector(closest_other_tank_1)
+	goal_vec = goal_vec.normalized()
+
+	var dot = goal_vec.dot(get_global_transform().basis.z.normalized() * -1)
+	if dot < 0:
+		speed = 0
+	
+	turn_to(global_transform.origin + goal_vec, delta)
+	
+	#global_position += (goal_pos - global_position).normalized() * world.get_speed() * 1.5 * _delta
+	#if name == "tank2":
+	#	print("advancing: z=", position.z, " dot=", dot, " speed=", speed)
+	return
+
+func avoid_vector(node : Node3D) -> Vector3:
+	if node == null:
+		return Vector3.ZERO
+	var distSqrd : float = node.global_position.distance_squared_to(global_position)
+	const max_dist : float = 96 * 96
+	if distSqrd > max_dist:
+		return Vector3.ZERO
+	var weight : float = 1.0 - (distSqrd / max_dist)
+	
+	return (global_position - node.global_position).normalized() * weight
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
@@ -119,38 +203,7 @@ func _process(_delta):
 			return
 
 	if state_advancing:
-		var goal_z = world.get_train_start_z()
-		if position.z < goal_z:
-			state_advancing = false
-			state_aiming = true
-			aim_time = max_aim_time
-			#pre_aim_rotation = rotation
-			return
-
-		#TODO: Avoid other tanks and the train
-		var goal_pos : Vector3 = get_ground_pos(Vector3(global_position.x, global_position.y + float_height, goal_z)) + Vector3.UP * float_height
-		
-		speed = lerp(speed, world.get_speed() * 1.5, _delta)
-		
-		# If we're too close or too far from the tracks, adjust
-		var dist_from_tracks = abs(global_position.x)
-		var sign_of_x = 1
-		if dist_from_tracks > 0:
-			sign_of_x = global_position.x / dist_from_tracks
-		if dist_from_tracks < 96:
-			goal_pos = Vector3(sign_of_x * 160, global_position.y + float_height, global_position.z - 1)
-		elif abs(global_position.x) > 256:
-			goal_pos = Vector3(0, global_position.y + float_height, global_position.z - 1)
-				
-		var dot = (goal_pos - global_transform.origin).normalized().dot(get_global_transform().basis.z.normalized() * -1)
-		if dot < 0:
-			speed = 0
-		
-		turn_to(goal_pos, _delta)
-		
-		#global_position += (goal_pos - global_position).normalized() * world.get_speed() * 1.5 * _delta
-		#if name == "tank2":
-		#	print("advancing: z=", position.z, " dot=", dot, " speed=", speed)
+		handle_state_advancing(_delta)
 		return
 	
 	if state_aiming:

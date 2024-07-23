@@ -181,6 +181,33 @@ func _process(_delta: float):
 		place_box_car(train_cars[i], i)
 	
 	move_reticule($Camera3D)
+	
+	update_enemies()
+
+var tank_base_index : int = 0
+var tank_comparitor_index : int = 0
+
+func update_enemies() -> void:
+	tank_base_index = (tank_base_index + 1) % enemies.size()
+	var tank : Node3D = enemies[tank_base_index]
+	if tank == null:
+		print("TANK #", tank_base_index, " is NULL")
+		return
+	if tank.is_dead():
+		tank.start_resurection()
+		return
+		
+	tank_comparitor_index = (tank_comparitor_index + 7) % enemies.size()
+	if tank_comparitor_index == tank_base_index:
+		return
+		
+	var other : Node3D = enemies[tank_comparitor_index]
+	if other == null:
+		print("TANK #", tank_comparitor_index, " is NULL")
+		return
+	var distSqrd : float = tank.global_position.distance_squared_to(other.global_position)
+	tank.consider_other(other, distSqrd)
+	other.consider_other(tank, distSqrd)
 
 func move_reticule(aimer : Node3D) -> void:
 	var space_state = get_world_3d().direct_space_state
