@@ -1,14 +1,16 @@
 extends Node3D
 
 signal hit
-var alive : bool = true
+#var alive : bool = true
 var world : Node3D
 
 var state_advancing : bool = false
 var state_aiming : bool = false
 var state_firing : bool = false
 var state_dead : bool = false
+const rotation_speed : float = 1.5
 const max_aim_time : float = 1
+const float_height : float = 2.5
 var aim_time : float = 0
 var speed : float = 0
 
@@ -29,6 +31,9 @@ func on_hit() -> void:
 	state_dead = true
 	#alive = false
 	#self.position.y -= 60
+
+func is_dead() -> bool:
+	return state_dead
 
 func determine_world_object(object):
 	if not object is Node:
@@ -58,25 +63,44 @@ func get_ground_pos(pos : Vector3):
 		return Vector3.ZERO
 	else:
 		return result["position"]
-	
+
+func self_destruct():
+	state_dead = true
+	state_firing = false
+	state_aiming = false
+	state_advancing = false
+	print(name, " self destructing")
+
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
+	if state_dead:
+		return
+
 	#if name == "tank2":
 		#print(position)
 	if speed > 0:
-		global_position = get_ground_pos(-1 * speed * _delta * get_global_transform().basis.z.normalized() + global_position) + 2.5 * Vector3.UP
+		global_position = get_ground_pos(-1 * speed * _delta * get_global_transform().basis.z.normalized() + global_position) + float_height * Vector3.UP
+	
+	if position.y > 100 || position.y < -100:
+		self_destruct()
+		return
 		
 	var our_ground : Vector3 = get_ground_pos(global_position)
 	if our_ground == Vector3.ZERO:
+		self_destruct()
 		return
 	var forward_ground : Vector3 = get_ground_pos(-1 * 2 * get_global_transform().basis.z.normalized() + global_position)
 	if forward_ground == Vector3.ZERO:
+		self_destruct()
 		return
 	var forward_pos = global_position + (forward_ground - our_ground)
 	if forward_pos == global_position:
-		print("forward == current!!! rot=", global_rotation_degrees)
+		print("forward == current!!! rot=", global_rotation_degrees, " our_ground=", our_ground, " forward_pos=", forward_ground)
+		self_destruct()
+		return
+		
 	look_at(forward_pos)
-	global_position.y = (our_ground.y + forward_pos.y) / 2.0 + 2.5
+	global_position.y = (our_ground.y + forward_pos.y) / 2.0 + float_height
 	
 	if state_dead:
 		if name == "tank2":
@@ -104,7 +128,7 @@ func _process(_delta):
 			return
 
 		#TODO: Avoid other tanks and the train
-		var goal_pos : Vector3 = get_ground_pos(Vector3(global_position.x, global_position.y + 2.5, goal_z)) + Vector3.UP * 2.5
+		var goal_pos : Vector3 = get_ground_pos(Vector3(global_position.x, global_position.y + 2.5, goal_z)) + Vector3.UP * float_height
 		var dot = (goal_pos - global_transform.origin).normalized().dot(get_global_transform().basis.z.normalized() * -1)
 		
 		turn_to(goal_pos, _delta)
@@ -145,8 +169,26 @@ func turn_to(target_pos : Vector3, delta : float):
 		return
 
 	var wtransform = global_transform.looking_at(target_pos)
-	#TODO: We shouldn't be using lerp here, we should be turning at a constant speed
-	var wrotation = global_transform.basis.get_rotation_quaternion().slerp(wtransform.basis.get_rotation_quaternion(), delta)
+	var target_quaternion = wtransform.basis.get_rotation_quaternion();
+	
+	var current_rotation : Quaternion = global_transform.basis.get_rotation_quaternion();
+	var rotation_difference: Quaternion = target_quaternion * current_rotation.inverse()
+	var amount_of_roation_needed : float = abs(rotation_difference.get_angle())
+	if amount_of_roation_needed < 0.01:
+		return
+	
+	var rotation_this_impulse: float = rotation_speed * delta
+
+	# Cache scale
 	var s = scale
-	global_transform = Transform3D(Basis(wrotation), global_transform.origin)
+	
+	# Apply the incremental rotation
+	var fraction = rotation_this_impulse / amount_of_roation_needed;
+	if fraction < 1.0:
+		var wrotation = current_rotation.slerp(target_quaternion, fraction)
+		global_transform = Transform3D(Basis(wrotation), global_transform.origin)
+	else:
+		global_transform = Transform3D(Basis(target_quaternion), global_transform.origin)
+	
+	# Restore Scale
 	scale = s
