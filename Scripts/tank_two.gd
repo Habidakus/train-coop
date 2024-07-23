@@ -13,6 +13,15 @@ const max_aim_time : float = 1
 const float_height : float = 2.5
 var aim_time : float = 0
 var speed : float = 0
+const max_other_tracked_tanks = 5
+var closest_other_tanks : Array[Node3D] = []
+var comparitor_index : int = 0
+
+func get_comparitor_tank_index() -> int:
+	return comparitor_index
+
+func set_comparitor_tank_index(index : int) -> void:
+	comparitor_index = index
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -38,30 +47,24 @@ func is_dead() -> bool:
 func start_resurection() -> void:
 	pass
 
-var closest_other_tank_1 : Node3D = null
-var closest_other_tank_2 : Node3D = null
 func consider_other(other : Node3D, distSqrd : float) -> void:
-	if closest_other_tank_1 == null:
-		closest_other_tank_1 = other
+	if closest_other_tanks.size() < max_other_tracked_tanks:
+		for tank in closest_other_tanks:
+			if tank == other:
+				return
+		closest_other_tanks.append(other)
 		return
-	var d21s : float = global_position.distance_squared_to(closest_other_tank_1.global_position)
-	if closest_other_tank_2 == null:
-		closest_other_tank_2 = other
-		if d21s > distSqrd:
-			# New tank is the closest, so it gets moved to #1
-			closest_other_tank_2 = closest_other_tank_1
-			closest_other_tank_1 = other
-		else:
-			# New tank isn't as close a #1
-			closest_other_tank_2 = other
-		return
-	if d21s > distSqrd:
-		closest_other_tank_2 = closest_other_tank_1
-		closest_other_tank_1 = other
-		return
-	var d22s : float = global_position.distance_squared_to(closest_other_tank_2.global_position)
-	if d22s > distSqrd:
-		closest_other_tank_2 = other
+
+	var farthest_tank_index : int = -1
+	var farthest_tank_distance_sqrd : float = distSqrd
+	for i in range(1, max_other_tracked_tanks):
+		var d : float = global_position.distance_squared_to(closest_other_tanks[i].global_position)
+		if d > farthest_tank_distance_sqrd:
+			farthest_tank_distance_sqrd = d
+			farthest_tank_index = i
+
+	if farthest_tank_index != -1:
+		closest_other_tanks[farthest_tank_index] = other
 
 func determine_world_object(object):
 	if not object is Node:
@@ -88,10 +91,9 @@ func get_ground_pos(pos : Vector3):
 
 	# TODO: We should make sure we're only testing against ground, not just anything that isn't ourselves
 	query.exclude = [$StaticBody3D.get_rid()]
-	if closest_other_tank_1 != null:
-		query.exclude.append(closest_other_tank_1.get_rid())
-	if closest_other_tank_2 != null:
-		query.exclude.append(closest_other_tank_2.get_rid())
+	for tank in closest_other_tanks:
+		if tank != null:
+			query.exclude.append(tank.get_rid())
 
 	var result : Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
 	if result.is_empty():
@@ -121,35 +123,45 @@ func handle_state_advancing(delta : float) -> void:
 	speed = lerp(speed, world.get_speed() * 1.5, delta)
 	
 	# If we're too close or too far from the tracks, adjust
-	var dist_from_tracks = abs(global_position.x)
-	var sign_of_x = 1
-	if dist_from_tracks > 0:
-		sign_of_x = global_position.x / dist_from_tracks
-	if dist_from_tracks < 96:
-		goal_pos = Vector3(sign_of_x * 160, global_position.y + float_height, global_position.z - 1)
-	elif abs(global_position.x) > 256:
-		goal_pos = Vector3(0, global_position.y + float_height, global_position.z - 1)
+	#var dist_from_tracks = abs(global_position.x)
+	#var sign_of_x = 1
+	#if dist_from_tracks > 0:
+		#sign_of_x = global_position.x / dist_from_tracks
+	#if dist_from_tracks < 96:
+		#goal_pos = Vector3(sign_of_x * 160, global_position.y + float_height, global_position.z - 1)
+	#elif abs(global_position.x) > 256:
+		#goal_pos = Vector3(0, global_position.y + float_height, global_position.z - 1)
 
 	var goal_normal : Vector3 = Vector3(goal_pos.x - global_transform.origin.x, 0, goal_pos.z - global_transform.origin.z).normalized()
-	var avoid_1 : Vector3 = avoid_node(closest_other_tank_1)
-	var avoid_2 : Vector3 = avoid_node(closest_other_tank_2)
-	var avoid_3 : Vector3 = avoid_loc(Vector3(0, global_position.y, global_position.z))
-	var goal_vec : Vector3 = goal_normal / 2.0 + avoid_1 + avoid_2 + avoid_3
+	
+	var avoid_train : Vector3 = avoid_loc(Vector3(0, global_position.y, global_position.z))
+	const max_dist_from_train : float = 512.0
+	if avoid_train == Vector3.ZERO:
+		if global_position.x > max_dist_from_train:
+			avoid_train = Vector3(-1, 0, 0)
+		elif global_position.x < - max_dist_from_train:
+			avoid_train = Vector3(1, 0, 0)
+	var goal_vec : Vector3 = goal_normal / 5.0 + avoid_train
+	if avoid_train != Vector3.ZERO:
+		draw_line(global_position + avoid_train * 32.0, Color.RED)
+
+	for tank in closest_other_tanks:
+		if tank != null:
+			var avoid_tank : Vector3 = avoid_node(tank)
+			draw_line(global_position + avoid_tank * 32.0, Color.GREEN)
+			goal_vec += avoid_tank
+
 	goal_vec = goal_vec.normalized()
 
 	var dot = goal_vec.dot(get_global_transform().basis.z.normalized() * -1)
 	if dot < 0:
-		speed = 0
+		speed = lerpf(speed, 0, delta * 2)
+	elif dot < 0.5:
+		speed = lerpf(speed, speed * 0.66, delta)
 	
 	turn_to(global_transform.origin + goal_vec, delta)
 	
 	draw_line(global_position + goal_normal * 32.0, Color.WHITE)
-	if avoid_1 != Vector3.ZERO:
-		draw_line(global_position + avoid_1 * 32.0, Color.GREEN)
-	if avoid_2 != Vector3.ZERO:
-		draw_line(global_position + avoid_2 * 32.0, Color.BLUE)
-	if avoid_3 != Vector3.ZERO:
-		draw_line(global_position + avoid_3 * 32.0, Color.RED)
 	
 	#global_position += (goal_pos - global_position).normalized() * world.get_speed() * 1.5 * _delta
 	#if name == "tank2":
@@ -165,8 +177,8 @@ func draw_line(dest : Vector3, color : Color) -> void:
 	mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 	immediate_mesh.surface_begin(Mesh.PRIMITIVE_LINES, material)
-	immediate_mesh.surface_add_vertex(dest + 3 * float_height * Vector3.UP)
-	immediate_mesh.surface_add_vertex(global_position + 3 * float_height * Vector3.UP)
+	immediate_mesh.surface_add_vertex(dest + 6 * float_height * Vector3.UP)
+	immediate_mesh.surface_add_vertex(global_position + 6 * float_height * Vector3.UP)
 	immediate_mesh.surface_end()
 
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -222,7 +234,7 @@ func _process(_delta):
 		self_destruct()
 		return
 	var forward_pos = global_position + (forward_ground - our_ground)
-	if forward_pos == global_position:
+	if forward_pos.is_equal_approx(global_position):
 		print("forward == current!!! rot=", global_rotation_degrees, " our_ground=", our_ground, " forward_pos=", forward_ground)
 		self_destruct()
 		return
