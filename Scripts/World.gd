@@ -11,7 +11,7 @@ extends Node3D
 @export var train_speed_miles_per_hour : float = 40
 @export var box_car_spacing_feet : float = 60
 @export var box_car_count : int = 4
-@export var enemy_count : int = 120
+@export var enemy_count : int = 30
 @export var mouse_sensitivity : float = 1.5
 @export var turret_y_range : float = 40
 @export var turret_x_range_min : float = -14
@@ -73,6 +73,9 @@ func _ready():
 				x -= (48 + randf() * 128)
 			else:
 				x += (48 + randf() * 128)
+		
+		x = - abs(x)
+		
 		enemy.position = Vector3(x, 10, $Camera3D.position.z - randf() * chunk_size)
 		enemies.append(enemy)
 		enemy.assign_train_info(self)
@@ -196,7 +199,7 @@ func update_enemies() -> void:
 		tank.start_resurection()
 		return
 	
-	for i in range(0, 5):
+	for i in range(0, 15):
 		var tank_comparitor_index = tank.get_comparitor_tank_index()
 		tank_comparitor_index = (tank_comparitor_index + 7) % enemies.size()
 		tank.set_comparitor_tank_index(tank_comparitor_index)

@@ -154,6 +154,8 @@ func generate_chunk():
 	mesh_instance.set_surface_override_material(0, material)
 	mesh_instance.create_trimesh_collision()
 	var staticBody3d : StaticBody3D = StaticBody3D.new()
+	staticBody3d.collision_layer = 3
+	staticBody3d.collision_mask = 3
 	var cs : CollisionShape3D = CollisionShape3D.new()
 	cs.shape = mesh_instance.mesh.create_trimesh_shape()
 	staticBody3d.add_child(cs)

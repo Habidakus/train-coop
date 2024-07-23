@@ -13,9 +13,10 @@ const max_aim_time : float = 1
 const float_height : float = 2.5
 var aim_time : float = 0
 var speed : float = 0
-const max_other_tracked_tanks = 5
+const max_other_tracked_tanks = 15
 var closest_other_tanks : Array[Node3D] = []
 var comparitor_index : int = 0
+const draw_debug_lines : bool = false
 
 func get_comparitor_tank_index() -> int:
 	return comparitor_index
@@ -90,10 +91,11 @@ func get_ground_pos(pos : Vector3):
 	var query = PhysicsRayQueryParameters3D.create(start_point, end_point)
 
 	# TODO: We should make sure we're only testing against ground, not just anything that isn't ourselves
-	query.exclude = [$StaticBody3D.get_rid()]
-	for tank in closest_other_tanks:
-		if tank != null:
-			query.exclude.append(tank.get_rid())
+	query.collision_mask = 2
+	#query.exclude = [$StaticBody3D.get_rid()]
+	#for tank in closest_other_tanks:
+	#	if tank != null:
+	#		query.exclude.append(tank.get_rid())
 
 	var result : Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
 	if result.is_empty():
@@ -145,11 +147,13 @@ func handle_state_advancing(delta : float) -> void:
 	if avoid_train != Vector3.ZERO:
 		draw_line(global_position + avoid_train * 32.0, Color.RED)
 
+	var avoid_tanks : Vector3 = Vector3.ZERO
 	for tank in closest_other_tanks:
 		if tank != null:
-			var avoid_tank : Vector3 = avoid_node(tank)
-			draw_line(global_position + avoid_tank * 32.0, Color.GREEN)
-			goal_vec += avoid_tank
+			avoid_tanks = avoid_tanks + avoid_node(tank)
+	
+	goal_vec = goal_vec + avoid_tanks.normalized() / 2.0
+	draw_line(global_position + avoid_tanks.normalized() * 32.0, Color.GREEN)
 
 	goal_vec = goal_vec.normalized()
 
@@ -169,6 +173,9 @@ func handle_state_advancing(delta : float) -> void:
 	return
 
 func draw_line(dest : Vector3, color : Color) -> void:
+	if !draw_debug_lines:
+		return
+		
 	var mesh_instance := MeshInstance3D.new()
 	var immediate_mesh := ImmediateMesh.new()
 	var material := ORMMaterial3D.new()
@@ -205,7 +212,7 @@ func avoid_loc(loc : Vector3) -> Vector3:
 	
 	# If we're already headed away from it, ignore it
 	var dot = away_from_node.dot(get_global_transform().basis.z.normalized() * -1)
-	if dot > 0:
+	if dot > -0.1:
 		return Vector3.ZERO
 	
 	var weight : float = 1.0 - (sqrt(distSqrd) / max_dist)
