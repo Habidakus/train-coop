@@ -11,7 +11,7 @@ extends Node3D
 @export var train_speed_miles_per_hour : float = 40
 @export var box_car_spacing_feet : float = 60
 @export var box_car_count : int = 4
-@export var enemy_count : int = 10
+@export var enemy_count : int = 120
 @export var mouse_sensitivity : float = 1.5
 @export var turret_y_range : float = 40
 @export var turret_x_range_min : float = -14
@@ -185,7 +185,6 @@ func _process(_delta: float):
 	update_enemies()
 
 var tank_base_index : int = 0
-var tank_comparitor_index : int = 0
 
 func update_enemies() -> void:
 	tank_base_index = (tank_base_index + 1) % enemies.size()
@@ -196,25 +195,29 @@ func update_enemies() -> void:
 	if tank.is_dead():
 		tank.start_resurection()
 		return
+	
+	for i in range(0, 5):
+		var tank_comparitor_index = tank.get_comparitor_tank_index()
+		tank_comparitor_index = (tank_comparitor_index + 7) % enemies.size()
+		tank.set_comparitor_tank_index(tank_comparitor_index)
+	
+		if tank_comparitor_index == tank_base_index:
+			continue
 		
-	tank_comparitor_index = (tank_comparitor_index + 7) % enemies.size()
-	if tank_comparitor_index == tank_base_index:
-		return
-		
-	var other : Node3D = enemies[tank_comparitor_index]
-	if other == null:
-		print("TANK #", tank_comparitor_index, " is NULL")
-		return
+		var other : Node3D = enemies[tank_comparitor_index]
+		if other == null:
+			print("TANK #", tank_comparitor_index, " is NULL")
+			continue
 
-	# If they're on opposite sides of the track, never pair them up
-	var other_track_side : bool = other.global_position.x < 0
-	var our_track_side : bool = tank.global_position.x < 0
-	if other_track_side != our_track_side:
-		return
+		# If they're on opposite sides of the track, never pair them up
+		var other_track_side : bool = other.global_position.x < 0
+		var our_track_side : bool = tank.global_position.x < 0
+		if other_track_side != our_track_side:
+			continue
 
-	var distSqrd : float = tank.global_position.distance_squared_to(other.global_position)
-	tank.consider_other(other, distSqrd)
-	other.consider_other(tank, distSqrd)
+		var distSqrd : float = tank.global_position.distance_squared_to(other.global_position)
+		tank.consider_other(other, distSqrd)
+		other.consider_other(tank, distSqrd)
 
 func move_reticule(aimer : Node3D) -> void:
 	var space_state = get_world_3d().direct_space_state
