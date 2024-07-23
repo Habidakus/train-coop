@@ -130,7 +130,11 @@ func handle_state_advancing(delta : float) -> void:
 	elif abs(global_position.x) > 256:
 		goal_pos = Vector3(0, global_position.y + float_height, global_position.z - 1)
 
-	var goal_vec : Vector3 = Vector3(goal_pos.x - global_transform.origin.x, 0, goal_pos.z - global_transform.origin.z).normalized() + avoid_vector(closest_other_tank_1) + avoid_vector(closest_other_tank_2)
+	var goal_normal : Vector3 = Vector3(goal_pos.x - global_transform.origin.x, 0, goal_pos.z - global_transform.origin.z).normalized()
+	var avoid_1 : Vector3 = avoid_node(closest_other_tank_1)
+	var avoid_2 : Vector3 = avoid_node(closest_other_tank_2)
+	var avoid_3 : Vector3 = avoid_loc(Vector3(0, global_position.y, global_position.z))
+	var goal_vec : Vector3 = goal_normal / 2.0 + avoid_1 + avoid_2 + avoid_3
 	goal_vec = goal_vec.normalized()
 
 	var dot = goal_vec.dot(get_global_transform().basis.z.normalized() * -1)
@@ -139,27 +143,60 @@ func handle_state_advancing(delta : float) -> void:
 	
 	turn_to(global_transform.origin + goal_vec, delta)
 	
+	draw_line(global_position + goal_normal * 32.0, Color.WHITE)
+	if avoid_1 != Vector3.ZERO:
+		draw_line(global_position + avoid_1 * 32.0, Color.GREEN)
+	if avoid_2 != Vector3.ZERO:
+		draw_line(global_position + avoid_2 * 32.0, Color.BLUE)
+	if avoid_3 != Vector3.ZERO:
+		draw_line(global_position + avoid_3 * 32.0, Color.RED)
+	
 	#global_position += (goal_pos - global_position).normalized() * world.get_speed() * 1.5 * _delta
 	#if name == "tank2":
 	#	print("advancing: z=", position.z, " dot=", dot, " speed=", speed)
 	return
 
-func avoid_vector(node : Node3D) -> Vector3:
+func draw_line(dest : Vector3, color : Color) -> void:
+	var mesh_instance := MeshInstance3D.new()
+	var immediate_mesh := ImmediateMesh.new()
+	var material := ORMMaterial3D.new()
+
+	mesh_instance.mesh = immediate_mesh
+	mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+	immediate_mesh.surface_begin(Mesh.PRIMITIVE_LINES, material)
+	immediate_mesh.surface_add_vertex(dest + 3 * float_height * Vector3.UP)
+	immediate_mesh.surface_add_vertex(global_position + 3 * float_height * Vector3.UP)
+	immediate_mesh.surface_end()
+
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = color
+
+	# keep it on the screen for one frame
+	get_tree().get_root().add_child(mesh_instance)
+	await get_tree().physics_frame
+	mesh_instance.queue_free()
+
+func avoid_node(node : Node3D) -> Vector3:
 	if node == null:
 		return Vector3.ZERO
-	var distSqrd : float = node.global_position.distance_squared_to(global_position)
-	const max_dist : float = 96 * 96
-	if distSqrd > max_dist:
+	return avoid_loc(node.global_position)
+
+func avoid_loc(loc : Vector3) -> Vector3:
+	var distSqrd : float = loc.distance_squared_to(global_position)
+	const max_dist : float = 128
+	const max_dist_sqrd : float = max_dist * max_dist
+	if distSqrd > max_dist_sqrd:
 		return Vector3.ZERO
 	
-	var away_from_node : Vector3 = (global_position - node.global_position)
+	var away_from_node : Vector3 = (global_position - loc)
 	
 	# If we're already headed away from it, ignore it
 	var dot = away_from_node.dot(get_global_transform().basis.z.normalized() * -1)
 	if dot > 0:
 		return Vector3.ZERO
 	
-	var weight : float = 1.0 - (distSqrd / max_dist)
+	var weight : float = 1.0 - (sqrt(distSqrd) / max_dist)
 	return away_from_node.normalized() * weight
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
