@@ -205,6 +205,13 @@ func update_enemies() -> void:
 	if other == null:
 		print("TANK #", tank_comparitor_index, " is NULL")
 		return
+
+	# If they're on opposite sides of the track, never pair them up
+	var other_track_side : bool = other.global_position.x < 0
+	var our_track_side : bool = tank.global_position.x < 0
+	if other_track_side != our_track_side:
+		return
+
 	var distSqrd : float = tank.global_position.distance_squared_to(other.global_position)
 	tank.consider_other(other, distSqrd)
 	other.consider_other(tank, distSqrd)
