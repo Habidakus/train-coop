@@ -11,7 +11,7 @@ extends Node3D
 @export var train_speed_miles_per_hour : float = 40
 @export var box_car_spacing_feet : float = 60
 @export var box_car_count : int = 4
-@export var enemy_count : int = 50
+@export var enemy_count : int = 10
 @export var mouse_sensitivity : float = 1.5
 @export var turret_y_range : float = 40
 @export var turret_x_range_min : float = -14

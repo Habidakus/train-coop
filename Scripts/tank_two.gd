@@ -130,7 +130,7 @@ func handle_state_advancing(delta : float) -> void:
 	elif abs(global_position.x) > 256:
 		goal_pos = Vector3(0, global_position.y + float_height, global_position.z - 1)
 
-	var goal_vec : Vector3 = Vector3(goal_pos.x - global_transform.origin.x, 0, goal_pos.z - global_transform.origin.z).normalized() + avoid_vector(closest_other_tank_1) + avoid_vector(closest_other_tank_1)
+	var goal_vec : Vector3 = Vector3(goal_pos.x - global_transform.origin.x, 0, goal_pos.z - global_transform.origin.z).normalized() + avoid_vector(closest_other_tank_1) + avoid_vector(closest_other_tank_2)
 	goal_vec = goal_vec.normalized()
 
 	var dot = goal_vec.dot(get_global_transform().basis.z.normalized() * -1)
@@ -151,9 +151,16 @@ func avoid_vector(node : Node3D) -> Vector3:
 	const max_dist : float = 96 * 96
 	if distSqrd > max_dist:
 		return Vector3.ZERO
-	var weight : float = 1.0 - (distSqrd / max_dist)
 	
-	return (global_position - node.global_position).normalized() * weight
+	var away_from_node : Vector3 = (global_position - node.global_position)
+	
+	# If we're already headed away from it, ignore it
+	var dot = away_from_node.dot(get_global_transform().basis.z.normalized() * -1)
+	if dot > 0:
+		return Vector3.ZERO
+	
+	var weight : float = 1.0 - (distSqrd / max_dist)
+	return away_from_node.normalized() * weight
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
