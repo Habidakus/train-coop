@@ -232,8 +232,8 @@ func move_reticule(aimer : Node3D) -> void:
 		var pos : Vector3 = result["position"]
 		var norm : Vector3 = result["normal"]
 		turret_reticule.position = pos
-		turret_reticule.look_at(turret_reticule.global_transform.origin + norm, Vector3.UP)
 		if norm != Vector3.UP and norm != Vector3.DOWN:
+			turret_reticule.look_at(turret_reticule.global_transform.origin + norm, Vector3.UP)
 			turret_reticule.rotate_object_local(Vector3(1, 0, 0), 90)
 		turret_reticule.show()
 	else:
