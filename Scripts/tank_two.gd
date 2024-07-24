@@ -4,10 +4,16 @@ signal hit
 #var alive : bool = true
 var world : Node3D
 
-var state_advancing : bool = false
-var state_aiming : bool = false
-var state_firing : bool = false
-var state_dead : bool = false
+enum State {
+	Dead,
+	Dying,
+	Advancing,
+	Aiming,
+	Firing,
+}
+
+var state : State = State.Advancing
+
 const rotation_speed : float = 1.5
 const max_aim_time : float = 1
 const float_height : float = 2.5
@@ -28,24 +34,17 @@ func set_comparitor_tank_index(index : int) -> void:
 func _ready():
 	hit.connect(on_hit)
 	name = "tank"
-	state_aiming = false
-	state_advancing = false
-	state_firing = true
-	state_dead = false
+	state = State.Advancing
 
 func on_hit() -> void:
 	print(name, " hit by bullet")
-	state_aiming = false
-	state_advancing = false
-	state_firing = false
-	state_dead = true
-	#alive = false
-	#self.position.y -= 60
+	state = State.Dying
 
 func is_dead() -> bool:
-	return state_dead
+	return (state == State.Dying) || (state == State.Dead)
 
 func start_resurection() -> void:
+	assert(is_dead())
 	pass
 
 func consider_other(other : Node3D, distSqrd : float) -> void:
@@ -104,22 +103,17 @@ func get_ground_pos(pos : Vector3):
 		return result["position"]
 
 func self_destruct():
-	state_dead = true
-	state_firing = false
-	state_aiming = false
-	state_advancing = false
+	assert(!is_dead())
+	state = State.Dying
 	print(name, " self destructing")
 
 func handle_state_advancing(delta : float) -> void:
 	var goal_z = world.get_train_start_z()
 	if position.z < goal_z:
-		state_advancing = false
-		state_aiming = true
+		state = State.Aiming
 		aim_time = max_aim_time
-		#pre_aim_rotation = rotation
 		return
 
-	#TODO: Avoid other tanks and the train
 	var goal_pos : Vector3 = get_ground_pos(Vector3(global_position.x, global_position.y + float_height, goal_z)) + Vector3.UP * float_height
 	
 	speed = lerp(speed, world.get_speed() * 1.5, delta)
@@ -220,7 +214,16 @@ func avoid_loc(loc : Vector3) -> Vector3:
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
-	if state_dead:
+	if state == State.Dead:
+		speed = 0
+		return
+
+	if state == State.Dying:
+		speed = 0
+		if global_position.y < -60:
+			state = State.Dead
+		else:
+			global_position.y -= _delta * 2.0
 		return
 
 	#if name == "tank2":
@@ -249,27 +252,21 @@ func _process(_delta):
 	look_at(forward_pos)
 	global_position.y = (our_ground.y + forward_pos.y) / 2.0 + float_height
 	
-	if state_dead:
-		if name == "tank2":
-			print("dead: z=", position.z)
-		return
-	
-	if state_firing:
+	if state == State.Firing:
 		#TODO: Make fire
 		speed = 0
 		if name == "tank2":
 			print("firing: z=", position.z)
 			
 		if position.z > world.get_train_end_z():
-			state_firing = false
-			state_advancing = true
+			state = State.Advancing
 			return
 
-	if state_advancing:
+	if state == State.Advancing:
 		handle_state_advancing(_delta)
 		return
 	
-	if state_aiming:
+	if state == State.Aiming:
 		aim_time -= _delta
 		speed = lerp(speed, 0.0, _delta * 2)
 		
@@ -287,8 +284,8 @@ func _process(_delta):
 		
 		#var n : Transform3D = global_transform.looking_at()
 		if aim_time <= 0:
-			state_aiming = false
-			state_firing = true
+			state = State.Firing
+			return
 
 func turn_to(target_pos : Vector3, delta : float):
 	#var global_pos = global_transform.origin
