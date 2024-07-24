@@ -1,0 +1,67 @@
+Multiplayer
+  - client & server roles
+  - multiple player places on the train
+  - netfox
+  - predictability for train/enemy
+  - lobby and game start
+
+Sub-tasks
+  - UI for split between primary weapon & sub-task
+  - system for picking sub-task
+  - actual sub-tasks
+    - sensor
+    - repair
+    - navigation
+    - crafting/resource collection
+    - engine/fuel
+    - shields
+    - specialized ammo crafting
+
+Score:
+  - craft collection
+  - enemies defeated
+  - damage to train
+  - time to finish
+  - reward allocation
+
+Waves:
+  - Enemy management
+  - intermission
+  - terrain changes
+  - enemy health & destruction
+  - different enemy types
+
+Primary Weapons:
+  - Different weapon types
+    - Cannon
+    - Flame Thrower
+    - MG
+    - Laser
+  - Things to mod
+    - Fire arc
+    - time cost to switch sides (or does it cover the full 360)
+    - Damage amount
+      - structure / armor / shield
+    - rate of fire per clip
+    - clip size
+    - clip reload time
+    - heat build up / cooldown
+
+Mods:
+  - weapon mod slots
+  - Simple Augmentors (1 slot each)
+  - Slot increasers (one negative trait, +2 slots)
+  - selecting mods for a mission (pre-game selection and mission-start allocation)
+  - whole train mods (eg; +repair, +engineSpeed)
+
+Player Persistance:
+  - central storage location / API (server file? google docs?)
+  - mods acquired
+  - resources and credits acquired
+
+HUD:
+  - score
+  - ETA (wave end / mission end)
+  - Primary Weapon info
+  - enemy/biome info
+  - sub-task selection
