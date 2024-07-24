@@ -43,6 +43,11 @@ func on_hit() -> void:
 func is_dead() -> bool:
 	return (state == State.Dying) || (state == State.Dead)
 
+func can_respawn() -> bool:
+	if !is_dead():
+		return false
+	return global_position.z > world.get_train_end_z() + 512
+
 func start_resurection() -> void:
 	assert(is_dead())
 	pass
@@ -102,10 +107,10 @@ func get_ground_pos(pos : Vector3):
 	else:
 		return result["position"]
 
-func self_destruct():
+func self_destruct(reason : String):
 	assert(!is_dead())
 	state = State.Dying
-	print(name, " self destructing")
+	print(name, " self destructing: ", reason)
 
 func handle_state_advancing(delta : float) -> void:
 	var goal_z = world.get_train_start_z()
@@ -130,7 +135,7 @@ func handle_state_advancing(delta : float) -> void:
 
 	var goal_normal : Vector3 = Vector3(goal_pos.x - global_transform.origin.x, 0, goal_pos.z - global_transform.origin.z).normalized()
 	
-	var avoid_train : Vector3 = avoid_loc(Vector3(0, global_position.y, global_position.z))
+	var avoid_train : Vector3 = avoid_loc(Vector3(0, global_position.y, global_position.z), 256)
 	const max_dist_from_train : float = 512.0
 	if avoid_train == Vector3.ZERO:
 		if global_position.x > max_dist_from_train:
@@ -144,10 +149,11 @@ func handle_state_advancing(delta : float) -> void:
 	var avoid_tanks : Vector3 = Vector3.ZERO
 	for tank in closest_other_tanks:
 		if tank != null:
-			avoid_tanks = avoid_tanks + avoid_node(tank)
+			avoid_tanks = avoid_tanks + avoid_node(tank, 128)
 	
 	goal_vec = goal_vec + avoid_tanks.normalized() / 2.0
-	draw_line(global_position + avoid_tanks.normalized() * 32.0, Color.GREEN)
+	if avoid_tanks != Vector3.ZERO:
+		draw_line(global_position + avoid_tanks.normalized() * 32.0, Color.GREEN)
 
 	goal_vec = goal_vec.normalized()
 
@@ -190,15 +196,14 @@ func draw_line(dest : Vector3, color : Color) -> void:
 	await get_tree().physics_frame
 	mesh_instance.queue_free()
 
-func avoid_node(node : Node3D) -> Vector3:
+func avoid_node(node : Node3D, max_dist : float) -> Vector3:
 	if node == null:
 		return Vector3.ZERO
-	return avoid_loc(node.global_position)
+	return avoid_loc(node.global_position, max_dist)
 
-func avoid_loc(loc : Vector3) -> Vector3:
+func avoid_loc(loc : Vector3, max_dist : float) -> Vector3:
 	var distSqrd : float = loc.distance_squared_to(global_position)
-	const max_dist : float = 128
-	const max_dist_sqrd : float = max_dist * max_dist
+	var max_dist_sqrd : float = max_dist * max_dist
 	if distSqrd > max_dist_sqrd:
 		return Vector3.ZERO
 	
@@ -211,6 +216,14 @@ func avoid_loc(loc : Vector3) -> Vector3:
 	
 	var weight : float = 1.0 - (sqrt(distSqrd) / max_dist)
 	return away_from_node.normalized() * weight
+
+func spawn(train : Node3D) -> void:
+	# TODO: For now we just hard code every enemy on the -x side
+	var x : float = 0 - (randf() * 2048.0 + 512.0)
+	var z : float = train.get_train_start_z() + randf() * 512.0
+	position = Vector3(x, 10, z)
+	assign_train_info(train)
+	state = State.Advancing
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
@@ -231,22 +244,28 @@ func _process(_delta):
 	if speed > 0:
 		global_position = get_ground_pos(-1 * speed * _delta * get_global_transform().basis.z.normalized() + global_position) + float_height * Vector3.UP
 	
-	if position.y > 100 || position.y < -100:
-		self_destruct()
+	if position.y > 100:
+		self_destruct("too high")
+		return
+	if position.y < -100:
+		self_destruct("too low")
 		return
 		
 	var our_ground : Vector3 = get_ground_pos(global_position)
 	if our_ground == Vector3.ZERO:
-		self_destruct()
+		self_destruct("no ground under us: " + str(global_position))
 		return
-	var forward_ground : Vector3 = get_ground_pos(-1 * 2 * get_global_transform().basis.z.normalized() + global_position)
+
+	var proj : Vector3 = -1 * 2 * get_global_transform().basis.z.normalized() + global_position
+	var forward_ground : Vector3 = get_ground_pos(proj)
 	if forward_ground == Vector3.ZERO:
-		self_destruct()
+		self_destruct("no ground under our projected path: " + str(proj))
 		return
+		
 	var forward_pos = global_position + (forward_ground - our_ground)
 	if forward_pos.is_equal_approx(global_position):
-		print("forward == current!!! rot=", global_rotation_degrees, " our_ground=", our_ground, " forward_pos=", forward_ground)
-		self_destruct()
+		var err = "forward == current!!! rot=" + str(global_rotation_degrees) + " our_ground=" + str(our_ground) + " forward_pos=" + str(forward_ground)
+		self_destruct(err)
 		return
 		
 	look_at(forward_pos)
@@ -290,6 +309,10 @@ func _process(_delta):
 func turn_to(target_pos : Vector3, delta : float):
 	#var global_pos = global_transform.origin
 	if Vector3.UP.cross(- (target_pos - global_position).normalized()).is_zero_approx():
+		#TODO: This tank is in a bad way, we should fix it getting in this state
+		return
+	
+	if (target_pos - global_position).is_zero_approx():
 		#TODO: This tank is in a bad way, we should fix it getting in this state
 		return
 

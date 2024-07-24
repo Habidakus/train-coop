@@ -66,20 +66,10 @@ func _ready():
 		var enemy = enemy_scene.instantiate()
 		#enemy.find_child("Model").scale *= units_per_meter
 		enemy.scale *= units_per_meter
-		#enemy.find_child("Cube").scale *= units_per_meter
-		var x : float = randf() * 4096.0 - 2048.0
-		if abs(x) < 48:
-			if x < 0:
-				x -= (48 + randf() * 128)
-			else:
-				x += (48 + randf() * 128)
-		
-		x = - abs(x)
-		
-		enemy.position = Vector3(x, 10, $Camera3D.position.z - randf() * chunk_size)
+		enemies_left_in_wave -= 1
 		enemies.append(enemy)
-		enemy.assign_train_info(self)
 		add_child(enemy)
+		enemy.spawn(self)
 	
 	for i in range(0, box_car_count):
 		var train_car
@@ -112,7 +102,6 @@ func get_box_car_position(car_number: int) -> Vector3:
 	var box_car_spacing_meters : float = box_car_spacing_feet * meters_per_foot
 	var relative_car_number : int = int(float(box_car_count - 1) / 2.0) - car_number
 	return Vector3($Camera3D.position.x, 0, $Camera3D.position.z - relative_car_number * box_car_spacing_meters * units_per_meter)
-
 
 func get_speed() -> float:
 	var meters_per_second = meters_per_mile * train_speed_miles_per_hour / 3600.0
@@ -188,6 +177,7 @@ func _process(_delta: float):
 	update_enemies()
 
 var tank_base_index : int = 0
+var enemies_left_in_wave : int = enemy_count * 2
 
 func update_enemies() -> void:
 	tank_base_index = (tank_base_index + 1) % enemies.size()
@@ -195,8 +185,11 @@ func update_enemies() -> void:
 	if tank == null:
 		print("TANK #", tank_base_index, " is NULL")
 		return
-	if tank.is_dead():
-		tank.start_resurection()
+
+	if tank.is_dead() && enemies_left_in_wave > 0:
+		if tank.can_respawn():
+			enemies_left_in_wave -= 1
+			tank.spawn(self)
 		return
 	
 	for i in range(0, 15):
@@ -232,7 +225,7 @@ func move_reticule(aimer : Node3D) -> void:
 		var pos : Vector3 = result["position"]
 		var norm : Vector3 = result["normal"]
 		turret_reticule.position = pos
-		if norm != Vector3.UP and norm != Vector3.DOWN:
+		if !(norm - Vector3.UP).is_zero_approx() and !(norm - Vector3.DOWN).is_zero_approx():
 			turret_reticule.look_at(turret_reticule.global_transform.origin + norm, Vector3.UP)
 			turret_reticule.rotate_object_local(Vector3(1, 0, 0), 90)
 		turret_reticule.show()
