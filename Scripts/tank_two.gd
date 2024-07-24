@@ -13,6 +13,7 @@ enum State {
 }
 
 var state : State = State.Advancing
+var age : float = 0
 
 const rotation_speed : float = 1.5
 const max_aim_time : float = 1
@@ -222,11 +223,14 @@ func spawn(train : Node3D) -> void:
 	var x : float = 0 - (randf() * 2048.0 + 512.0)
 	var z : float = train.get_train_start_z() + randf() * 512.0
 	position = Vector3(x, 10, z)
+	age = 0
 	assign_train_info(train)
 	state = State.Advancing
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
+	age += _delta
+	
 	if state == State.Dead:
 		speed = 0
 		return
@@ -245,21 +249,38 @@ func _process(_delta):
 		global_position = get_ground_pos(-1 * speed * _delta * get_global_transform().basis.z.normalized() + global_position) + float_height * Vector3.UP
 	
 	if position.y > 100:
-		self_destruct("too high")
+		if age < 1:
+			self_destruct("too high at spawn: " + str(position))
+			world.offer_enemy_redemption()
+		else:
+			self_destruct("too high while travelling: " + str(position))
 		return
 	if position.y < -100:
-		self_destruct("too low")
+		if age < 1:
+			self_destruct("too low at spawn: " + str(position))
+			world.offer_enemy_redemption()
+		else:
+			self_destruct("too low while travelling: " + str(position))
 		return
 		
 	var our_ground : Vector3 = get_ground_pos(global_position)
 	if our_ground == Vector3.ZERO:
-		self_destruct("no ground under us: " + str(global_position))
+		if age < 1:
+			self_destruct("no ground under us at spawn: " + str(global_position))
+			world.offer_enemy_redemption()
+		else:
+			self_destruct("no ground under us while travelling: " + str(global_position))
 		return
 
 	var proj : Vector3 = -1 * 2 * get_global_transform().basis.z.normalized() + global_position
 	var forward_ground : Vector3 = get_ground_pos(proj)
 	if forward_ground == Vector3.ZERO:
-		self_destruct("no ground under our projected path: " + str(proj))
+		world.possible_enemy_redemption(age)
+		if age < 1:
+			self_destruct("no ground under our projected path at spawn: " + str(proj))
+			world.offer_enemy_redemption()
+		else:
+			self_destruct("no ground under our projected path while travelling: " + str(proj))
 		return
 		
 	var forward_pos = global_position + (forward_ground - our_ground)

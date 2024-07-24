@@ -27,7 +27,7 @@ const chunk_radius : int = int(chunk_amount * 0.5);
 const chunk_subdivide : int = 32
 const chunk_height : float = 64
 
-var enemies = []
+var all_enemies = []
 var train_cars = []
 var existing_chunks = {}
 
@@ -62,15 +62,6 @@ func _ready():
 	add_child(turret_reticule)
 	move_reticule($Camera3D)
 	
-	for i in range(0, enemy_count):
-		var enemy = enemy_scene.instantiate()
-		#enemy.find_child("Model").scale *= units_per_meter
-		enemy.scale *= units_per_meter
-		enemies_left_in_wave -= 1
-		enemies.append(enemy)
-		add_child(enemy)
-		enemy.spawn(self)
-	
 	for i in range(0, box_car_count):
 		var train_car
 		if i > 0:
@@ -88,6 +79,21 @@ func _ready():
 		add_chunk(1, z)
 	
 	#thread = Thread.new()
+
+func offer_enemy_redemption() -> void:
+	print("Redeeming enemy count");
+	enemies_left_in_wave += 1
+
+func initialize_enemies() -> void:
+	assert(all_enemies.is_empty())
+	for i in range(0, enemy_count):
+		var enemy = enemy_scene.instantiate()
+		#enemy.find_child("Model").scale *= units_per_meter
+		enemy.scale *= units_per_meter
+		enemies_left_in_wave -= 1
+		all_enemies.append(enemy)
+		add_child(enemy)
+		enemy.spawn(self)
 
 func get_train_start_z() -> float:
 	return get_box_car_position(0).z
@@ -180,8 +186,11 @@ var tank_base_index : int = 0
 var enemies_left_in_wave : int = enemy_count * 2
 
 func update_enemies() -> void:
-	tank_base_index = (tank_base_index + 1) % enemies.size()
-	var tank : Node3D = enemies[tank_base_index]
+	if all_enemies.is_empty():
+		return
+		
+	tank_base_index = (tank_base_index + 1) % all_enemies.size()
+	var tank : Node3D = all_enemies[tank_base_index]
 	if tank == null:
 		print("TANK #", tank_base_index, " is NULL")
 		return
@@ -194,13 +203,13 @@ func update_enemies() -> void:
 	
 	for i in range(0, 15):
 		var tank_comparitor_index = tank.get_comparitor_tank_index()
-		tank_comparitor_index = (tank_comparitor_index + 7) % enemies.size()
+		tank_comparitor_index = (tank_comparitor_index + 7) % all_enemies.size()
 		tank.set_comparitor_tank_index(tank_comparitor_index)
 	
 		if tank_comparitor_index == tank_base_index:
 			continue
 		
-		var other : Node3D = enemies[tank_comparitor_index]
+		var other : Node3D = all_enemies[tank_comparitor_index]
 		if other == null:
 			print("TANK #", tank_comparitor_index, " is NULL")
 			continue
@@ -332,6 +341,9 @@ func load_chunk(key: Vector2i, chunk):
 	add_child(chunk)
 	existing_chunks[key] = chunk
 	pending_chunks.erase(key)
+	if all_enemies.is_empty() && existing_chunks.size() >= 9:
+		initialize_enemies()
+		
 
 func get_chunk(key : Vector2i):
 	if existing_chunks.has(key):
