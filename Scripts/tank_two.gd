@@ -126,21 +126,29 @@ func handle_state_aiming(delta : float) -> void:
 	var target_pos = Vector3(0, global_pos.y, world.get_train_start_z())
 	turn_to(target_pos, delta)
 	
-	#if name == "tank2":
-		#var dot = (target_pos - global_pos).normalized().dot(get_global_transform().basis.z.normalized() * -1)
-		#var cross_front = (target_pos - global_pos).normalized().cross(get_global_transform().basis.z.normalized() * -1)
-		#var end_pos = Vector3(0, global_pos.y, world.get_train_end_z())
-		#var cross_end = (end_pos - global_pos).normalized().cross(get_global_transform().basis.z.normalized() * -1)
-		
-		#print("turning: rot=", rotation_degrees.y, " front=", cross_front, " end=", cross_end)
+	var our_facing_normal = get_global_transform().basis.z.normalized() * -1
+	var normal_to_start = (target_pos - global_pos).normalized()
+	var dot = normal_to_start.dot(our_facing_normal)
 	
-	#var n : Transform3D = global_transform.looking_at()
-	
-	# TODO: Currently we just "aim" for N seconds. Instead we should actually just keep turning until such time as we are aimed somewhere between the start and end of the train
-	
+	if dot > 0.5:
+		var our_2d_facing = Vector2(our_facing_normal.x, our_facing_normal.z)
+		var normal_2d_to_start = Vector2(normal_to_start.x, normal_to_start.z)
+		var cross_front = normal_2d_to_start.cross(our_2d_facing)
+		if cross_front > 0:
+			var end_2d_pos = Vector2(0, world.get_train_end_z())
+			var normal_2d_to_end = (end_2d_pos - Vector2(global_pos.x, global_pos.z)).normalized()
+			var cross_end = normal_2d_to_end.cross(our_2d_facing)
+			if cross_end < 0:
+				state = State.Firing
+				return
+
 	aim_time -= delta
+					
 	if aim_time <= 0:
 		state = State.Firing
+	elif global_pos.z > world.get_train_end_z():
+		print(name, " WAS STILL AIMING WHEN TRAIN PASSED THEM BY")
+		state = State.Advancing
 
 func handle_state_firing() -> void:
 	speed = 0
