@@ -9,13 +9,13 @@ Sub-tasks
   - UI for split between primary weapon & sub-task
   - system for picking sub-task
   - actual sub-tasks
-    - sensor
-    - repair
-    - navigation
-    - crafting/resource collection
-    - engine/fuel
-    - shields
-    - specialized ammo crafting
+	- sensor
+	- repair
+	- navigation
+	- crafting/resource collection
+	- engine/fuel
+	- shields
+	- specialized ammo crafting
 
 Score:
   - craft collection
@@ -30,22 +30,25 @@ Waves:
   - terrain changes
   - enemy health & destruction
   - different enemy types
+  - Enemy threat to train
+	- Fix up firing VFX
+	- Train HP/shields/armor
 
 Primary Weapons:
   - Different weapon types
-    - Cannon
-    - Flame Thrower
-    - MG
-    - Laser
+	- Cannon
+	- Flame Thrower
+	- MG
+	- Laser
   - Things to mod
-    - Fire arc
-    - time cost to switch sides (or does it cover the full 360)
-    - Damage amount
-      - structure / armor / shield
-    - rate of fire per clip
-    - clip size
-    - clip reload time
-    - heat build up / cooldown
+	- Fire arc
+	- time cost to switch sides (or does it cover the full 360)
+	- Damage amount
+	  - structure / armor / shield
+	- rate of fire per clip
+	- clip size
+	- clip reload time
+	- heat build up / cooldown
 
 Mods:
   - weapon mod slots
