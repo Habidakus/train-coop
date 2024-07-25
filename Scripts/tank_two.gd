@@ -15,6 +15,9 @@ enum State {
 var state : State = State.Advancing
 var age : float = 0
 
+var reloading : float = 0
+var max_reload_time : float = 1
+
 const rotation_speed : float = 1.5
 const max_aim_time : float = 1
 const float_height : float = 2.5
@@ -242,6 +245,9 @@ func _process(_delta):
 		else:
 			global_position.y -= _delta * 2.0
 		return
+		
+		
+	reloading -= _delta
 
 	#if name == "tank2":
 		#print(position)
@@ -295,8 +301,12 @@ func _process(_delta):
 	if state == State.Firing:
 		#TODO: Make fire
 		speed = 0
-		if name == "tank2":
-			print("firing: z=", position.z)
+		
+		if reloading <= 0:
+			var vfx : GPUParticles3D = $TankFireVFX.find_child("GPUParticles3D2") as GPUParticles3D
+			if vfx != null:
+				vfx.emitting = true
+				reloading = max_reload_time
 			
 		if position.z > world.get_train_end_z():
 			state = State.Advancing

@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://c6h3s5icbhjo3"]
+[gd_scene load_steps=7 format=3 uid="uid://c6h3s5icbhjo3"]
 
 [ext_resource type="PackedScene" uid="uid://dyb22uarylggx" path="res://models/tank02.blend" id="1_d137a"]
 [ext_resource type="Script" path="res://Scripts/tank_two.gd" id="2_h02uc"]
+[ext_resource type="PackedScene" uid="uid://c63jrp0epd2nx" path="res://Scenes/tank_fire_vfx.tscn" id="3_v4n4j"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cmlb6"]
 albedo_color = Color(0.670588, 0.670588, 0.670588, 1)
@@ -28,3 +29,6 @@ surface_material_override/1 = SubResource("StandardMaterial3D_djv4i")
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="StaticBody3D" index="0"]
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.549318, 1.14998)
 shape = SubResource("ConvexPolygonShape3D_d4vli")
+
+[node name="TankFireVFX" parent="." index="2" instance=ExtResource("3_v4n4j")]
+transform = Transform3D(0.5, 1.16226e-07, -5.07508e-08, -3.67826e-08, -0.0585866, -0.496556, -1.21372e-07, 0.496556, -0.0585866, -8.15024e-09, 1.03284, 0.106772)
