@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://clroau2frju5j"]
+[gd_scene load_steps=17 format=3 uid="uid://clroau2frju5j"]
 
 [ext_resource type="Script" path="res://Scripts/World.gd" id="1_ii6my"]
 [ext_resource type="PackedScene" uid="uid://dockr54xmjfuy" path="res://Scenes/chunk.tscn" id="2_nxgqr"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://c6h3s5icbhjo3" path="res://Scenes/tank_two.tscn" id="4_ppkjr"]
 [ext_resource type="PackedScene" uid="uid://d3hqofk0bdsum" path="res://Scenes/bullet.tscn" id="5_6x1xf"]
 [ext_resource type="PackedScene" uid="uid://dl1fyw0we4ief" path="res://Scenes/target_reticule.tscn" id="6_nl3rw"]
+[ext_resource type="PackedScene" uid="uid://bwdnys6nqp6s4" path="res://Scenes/hud.tscn" id="8_vs707"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_yj3jc"]
 frequency = 0.0035
@@ -96,3 +97,5 @@ shadow_blur = 0.899
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_shryu")
 camera_attributes = SubResource("CameraAttributesPractical_h5nur")
+
+[node name="HUD" parent="." instance=ExtResource("8_vs707")]

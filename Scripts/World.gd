@@ -82,17 +82,15 @@ func _ready():
 
 var train_damage : float = 0;
 func add_damage(dmg : float) -> void:
-	# TODO: Update HUD
 	train_damage += dmg
-	print("Train damage = ", str(train_damage))
+	$HUD.set_stat("Train Damage", int(round(train_damage)))
 
 func update_scoreboard_kill() -> void:
 	var remaining_enemies : int = enemies_left_in_wave
 	for tank in all_enemies:
 		if tank != null && !tank.is_dead():
 			remaining_enemies += 1
-	# TODO: Update HUD
-	print("Remaining enemies = ", str(remaining_enemies))
+	$HUD.set_stat("Enemy Remaining", remaining_enemies)
 
 func offer_enemy_redemption() -> void:
 	enemies_left_in_wave += 1
