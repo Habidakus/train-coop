@@ -47,6 +47,11 @@ var turret_x_accel : float = 0
 var turret_cooldown : float = 0
 var turret_reticule : Decal
 
+var tank_base_index : int = 0
+var enemies_left_in_wave : int = enemy_count * 2
+var train_damage : float = 0
+var wave_time : float = 0
+
 func _ready():
 	randomize()
 	noise.seed = randi()
@@ -80,23 +85,23 @@ func _ready():
 	
 	#thread = Thread.new()
 
-var train_damage : float = 0;
 func add_damage(dmg : float) -> void:
 	train_damage += dmg
-	$HUD.set_stat("Train Damage", int(round(train_damage)))
+	$HUD.set_stat("Train Damage", str(int(round(train_damage))))
 
 func update_scoreboard_kill() -> void:
 	var remaining_enemies : int = enemies_left_in_wave
 	for tank in all_enemies:
 		if tank != null && !tank.is_dead():
 			remaining_enemies += 1
-	$HUD.set_stat("Enemy Remaining", remaining_enemies)
+	$HUD.set_stat("Enemy Remaining", str(remaining_enemies))
 
 func offer_enemy_redemption() -> void:
 	enemies_left_in_wave += 1
 
 func initialize_enemies() -> void:
 	assert(all_enemies.is_empty())
+	wave_time = 0
 	for i in range(0, enemy_count):
 		var enemy = enemy_scene.instantiate()
 		#enemy.find_child("Model").scale *= units_per_meter
@@ -107,10 +112,10 @@ func initialize_enemies() -> void:
 		enemy.spawn(self)
 
 func get_train_start_z() -> float:
-	return get_box_car_position(0).z
+	return get_box_car_position(0).z - box_car_spacing_feet * meters_per_foot / 2.0
 
 func get_train_end_z() -> float:
-	return get_box_car_position(box_car_count - 1).z
+	return get_box_car_position(box_car_count - 1).z + box_car_spacing_feet * meters_per_foot / 2.0
 
 func place_box_car(train_car, car_number : int):
 	train_car.position = get_box_car_position(car_number)
@@ -128,6 +133,18 @@ func _process(_delta: float):
 	update_chunks()
 	clean_up_chunks()
 	reset_chunks()
+
+	if !all_enemies.is_empty():
+		var previous_wave_time : float = wave_time
+		wave_time += _delta
+		if int(previous_wave_time) != int(wave_time):
+			var seconds : int = int(wave_time) % 60
+			var minutes : int = int((wave_time - seconds) / 60.0)
+			if seconds < 10:
+				$HUD.set_stat("Wave Time", str(minutes) + ":0" + str(seconds))
+			else:
+				$HUD.set_stat("Wave Time", str(minutes) + ":" + str(seconds))
+			
 	
 	if $DirectionalLight3D is DirectionalLight3D:
 		($DirectionalLight3D as DirectionalLight3D).rotation.x -= _delta / 300.0
@@ -192,9 +209,6 @@ func _process(_delta: float):
 	move_reticule($Camera3D)
 	
 	update_enemies()
-
-var tank_base_index : int = 0
-var enemies_left_in_wave : int = enemy_count * 2
 
 func update_enemies() -> void:
 	if all_enemies.is_empty():
