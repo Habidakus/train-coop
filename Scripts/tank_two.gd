@@ -41,8 +41,7 @@ func _ready():
 	state = State.Advancing
 
 func on_hit() -> void:
-	print(name, " hit by bullet")
-	state = State.Dying
+	self_destruct("hit by bullet", true)
 
 func is_dead() -> bool:
 	return (state == State.Dying) || (state == State.Dead)
@@ -111,10 +110,51 @@ func get_ground_pos(pos : Vector3):
 	else:
 		return result["position"]
 
-func self_destruct(reason : String):
+func self_destruct(reason : String, confirmed_kill : bool):
 	assert(!is_dead())
 	state = State.Dying
 	print(name, " self destructing: ", reason)
+	if confirmed_kill:
+		world.update_scoreboard_kill()
+	else:
+		world.offer_enemy_redemption()
+
+func handle_state_aiming(delta : float) -> void:
+	speed = lerp(speed, 0.0, delta * 2)
+
+	var global_pos = global_transform.origin
+	var target_pos = Vector3(0, global_pos.y, world.get_train_start_z())
+	turn_to(target_pos, delta)
+	
+	#if name == "tank2":
+		#var dot = (target_pos - global_pos).normalized().dot(get_global_transform().basis.z.normalized() * -1)
+		#var cross_front = (target_pos - global_pos).normalized().cross(get_global_transform().basis.z.normalized() * -1)
+		#var end_pos = Vector3(0, global_pos.y, world.get_train_end_z())
+		#var cross_end = (end_pos - global_pos).normalized().cross(get_global_transform().basis.z.normalized() * -1)
+		
+		#print("turning: rot=", rotation_degrees.y, " front=", cross_front, " end=", cross_end)
+	
+	#var n : Transform3D = global_transform.looking_at()
+	
+	# TODO: Currently we just "aim" for N seconds. Instead we should actually just keep turning until such time as we are aimed somewhere between the start and end of the train
+	
+	aim_time -= delta
+	if aim_time <= 0:
+		state = State.Firing
+
+func handle_state_firing() -> void:
+	speed = 0
+		
+	if reloading <= 0:
+		# TODO: Don't actually fire unless we're aimed somewhere between the start and end of the train
+		var vfx : GPUParticles3D = $TankFireVFX.find_child("GPUParticles3D2") as GPUParticles3D
+		if vfx != null:
+			vfx.emitting = true
+			reloading = max_reload_time
+			world.add_damage(1)
+			
+	if position.z > world.get_train_end_z():
+		state = State.Advancing
 
 func handle_state_advancing(delta : float) -> void:
 	var goal_z = world.get_train_start_z()
@@ -254,88 +294,44 @@ func _process(_delta):
 	if speed > 0:
 		global_position = get_ground_pos(-1 * speed * _delta * get_global_transform().basis.z.normalized() + global_position) + float_height * Vector3.UP
 	
-	if position.y > 100:
-		if age < 1:
-			self_destruct("too high at spawn: " + str(position))
-			world.offer_enemy_redemption()
-		else:
-			self_destruct("too high while travelling: " + str(position))
+	if position.y > 256:
+		self_destruct("too high: " + str(position), age > 1)
 		return
-	if position.y < -100:
-		if age < 1:
-			self_destruct("too low at spawn: " + str(position))
-			world.offer_enemy_redemption()
-		else:
-			self_destruct("too low while travelling: " + str(position))
+	if position.y < -256:
+		self_destruct("too low: " + str(position), age > 1)
 		return
 		
 	var our_ground : Vector3 = get_ground_pos(global_position)
 	if our_ground == Vector3.ZERO:
-		if age < 1:
-			self_destruct("no ground under us at spawn: " + str(global_position))
-			world.offer_enemy_redemption()
-		else:
-			self_destruct("no ground under us while travelling: " + str(global_position))
+		self_destruct("no ground under us: " + str(global_position), age > 1)
 		return
 
 	var proj : Vector3 = -1 * 2 * get_global_transform().basis.z.normalized() + global_position
 	var forward_ground : Vector3 = get_ground_pos(proj)
 	if forward_ground == Vector3.ZERO:
-		world.possible_enemy_redemption(age)
-		if age < 1:
-			self_destruct("no ground under our projected path at spawn: " + str(proj))
-			world.offer_enemy_redemption()
-		else:
-			self_destruct("no ground under our projected path while travelling: " + str(proj))
+		self_destruct("no ground under our projected path at spawn: " + str(proj), age > 1)
 		return
 		
 	var forward_pos = global_position + (forward_ground - our_ground)
 	if forward_pos.is_equal_approx(global_position):
 		var err = "forward == current!!! rot=" + str(global_rotation_degrees) + " our_ground=" + str(our_ground) + " forward_pos=" + str(forward_ground)
-		self_destruct(err)
+		self_destruct(err, age > 1)
 		return
 		
 	look_at(forward_pos)
 	global_position.y = (our_ground.y + forward_pos.y) / 2.0 + float_height
 	
 	if state == State.Firing:
-		#TODO: Make fire
-		speed = 0
-		
-		if reloading <= 0:
-			var vfx : GPUParticles3D = $TankFireVFX.find_child("GPUParticles3D2") as GPUParticles3D
-			if vfx != null:
-				vfx.emitting = true
-				reloading = max_reload_time
-			
-		if position.z > world.get_train_end_z():
-			state = State.Advancing
-			return
+		handle_state_firing()
+		return
 
 	if state == State.Advancing:
 		handle_state_advancing(_delta)
 		return
 	
 	if state == State.Aiming:
-		aim_time -= _delta
-		speed = lerp(speed, 0.0, _delta * 2)
-		
-		var global_pos = global_transform.origin
-		var target_pos = Vector3(0, global_pos.y, world.get_train_start_z())
-		turn_to(target_pos, _delta)
-		
-		#if name == "tank2":
-			#var dot = (target_pos - global_pos).normalized().dot(get_global_transform().basis.z.normalized() * -1)
-			#var cross_front = (target_pos - global_pos).normalized().cross(get_global_transform().basis.z.normalized() * -1)
-			#var end_pos = Vector3(0, global_pos.y, world.get_train_end_z())
-			#var cross_end = (end_pos - global_pos).normalized().cross(get_global_transform().basis.z.normalized() * -1)
-			
-			#print("turning: rot=", rotation_degrees.y, " front=", cross_front, " end=", cross_end)
-		
-		#var n : Transform3D = global_transform.looking_at()
-		if aim_time <= 0:
-			state = State.Firing
-			return
+		handle_state_aiming(_delta)
+		return
 
 func turn_to(target_pos : Vector3, delta : float):
 	#var global_pos = global_transform.origin

@@ -80,8 +80,21 @@ func _ready():
 	
 	#thread = Thread.new()
 
+var train_damage : float = 0;
+func add_damage(dmg : float) -> void:
+	# TODO: Update HUD
+	train_damage += dmg
+	print("Train damage = ", str(train_damage))
+
+func update_scoreboard_kill() -> void:
+	var remaining_enemies : int = enemies_left_in_wave
+	for tank in all_enemies:
+		if tank != null && !tank.is_dead():
+			remaining_enemies += 1
+	# TODO: Update HUD
+	print("Remaining enemies = ", str(remaining_enemies))
+
 func offer_enemy_redemption() -> void:
-	print("Redeeming enemy count");
 	enemies_left_in_wave += 1
 
 func initialize_enemies() -> void:
@@ -235,8 +248,9 @@ func move_reticule(aimer : Node3D) -> void:
 		var norm : Vector3 = result["normal"]
 		turret_reticule.position = pos
 		if !(norm - Vector3.UP).is_zero_approx() and !(norm - Vector3.DOWN).is_zero_approx():
-			turret_reticule.look_at(turret_reticule.global_transform.origin + norm, Vector3.UP)
-			turret_reticule.rotate_object_local(Vector3(1, 0, 0), 90)
+			if norm.dot(Vector3.UP) > 0.001:
+				turret_reticule.look_at(turret_reticule.global_transform.origin + norm, Vector3.UP)
+				turret_reticule.rotate_object_local(Vector3(1, 0, 0), 90)
 		turret_reticule.show()
 	else:
 		turret_reticule.hide()

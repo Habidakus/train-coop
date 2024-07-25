@@ -14,7 +14,13 @@ func _process(delta):
 	
 	if time_to_explode < 0:
 		if maybe_world_object:
-			print("bullet might have hit ", maybe_world_object.get_path())
+			if maybe_world_object.has_user_signal("hit"):
+				print("bullet might have hit user signal object ", maybe_world_object.get_path())
+				maybe_world_object.emit_signal("hit")
+			elif maybe_world_object.has_signal("hit"):
+				print("bullet might have hit ", maybe_world_object.get_path())
+				maybe_world_object.emit_signal("hit")
+			maybe_world_object = null
 		explode(position)
 		queue_free()
 	if lifetime < 0:
@@ -49,10 +55,7 @@ func _physics_process(delta):
 					print("bullet thinks it has hit user signal object ", world_object.get_path())
 					world_object.emit_signal("hit")
 				elif world_object.has_signal("hit"):
-					print("bullet thinks it has hit regular signal object ", world_object.get_path())
 					world_object.emit_signal("hit")
-				else:
-					print("bullet thinks it has hit non signal object ", world_object.get_path())
 			explode(pos)
 			queue_free()
 		else:
