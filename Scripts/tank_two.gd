@@ -92,8 +92,8 @@ func get_rid():
 	return $StaticBody3D.get_rid()
 	
 func get_ground_pos(pos : Vector3):
-	var start_point = pos + Vector3.UP * 64
-	var end_point = pos + Vector3.DOWN * 64
+	var start_point = pos + Vector3.UP * 128
+	var end_point = pos + Vector3.DOWN * 128
 
 	var query = PhysicsRayQueryParameters3D.create(start_point, end_point)
 
@@ -265,7 +265,8 @@ func spawn(train : Node3D) -> void:
 	# TODO: For now we just hard code every enemy on the -x side
 	var x : float = 0 - (randf() * 2048.0 + 512.0)
 	var z : float = train.get_train_start_z() + randf() * 512.0
-	position = Vector3(x, 10, z)
+	#position = Vector3(x, 10, z)
+	global_position = get_ground_pos(Vector3(x, 10, z)) + float_height * Vector3.UP
 	age = 0
 	assign_train_info(train)
 	state = State.Advancing
