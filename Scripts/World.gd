@@ -46,6 +46,7 @@ var turret_y_accel : float = 0
 var turret_x_accel : float = 0
 var turret_cooldown : float = 0
 var turret_reticule : Decal
+var shots_fired : int = 0
 
 var tank_base_index : int = 0
 var enemies_left_in_wave : int = enemy_count * 2
@@ -129,14 +130,14 @@ func get_speed() -> float:
 	var meters_per_second = meters_per_mile * train_speed_miles_per_hour / 3600.0
 	return meters_per_second * units_per_meter
 	
-func _process(_delta: float):
+func _process(delta: float):
 	update_chunks()
 	clean_up_chunks()
 	reset_chunks()
 
 	if !all_enemies.is_empty():
 		var previous_wave_time : float = wave_time
-		wave_time += _delta
+		wave_time += delta
 		if int(previous_wave_time) != int(wave_time):
 			var seconds : int = int(wave_time) % 60
 			var minutes : int = int((wave_time - seconds) / 60.0)
@@ -144,41 +145,49 @@ func _process(_delta: float):
 				$HUD.set_stat("Wave Time", str(minutes) + ":0" + str(seconds))
 			else:
 				$HUD.set_stat("Wave Time", str(minutes) + ":" + str(seconds))
-			
 	
 	if $DirectionalLight3D is DirectionalLight3D:
-		($DirectionalLight3D as DirectionalLight3D).rotation.x -= _delta / 300.0
-		($DirectionalLight3D as DirectionalLight3D).rotation.y += _delta / 300.0
+		($DirectionalLight3D as DirectionalLight3D).rotation.x -= delta / 300.0
+		($DirectionalLight3D as DirectionalLight3D).rotation.y += delta / 300.0
 	
-	$Camera3D.position.z -= get_speed() * _delta
+	handle_turret(delta)
+	
+	move_train()
+	
+	move_reticule($Camera3D)
+	
+	update_enemies()
+
+func handle_turret(delta: float) -> void:
+	$Camera3D.position.z -= get_speed() * delta
 	#$Camera3D.rotation.y -= _delta / 10.0
 	#$Camera3D.rotation_degrees.y += _delta
 	if turret_y_negative != turret_y_positive:
 		if turret_y_positive:
-			turret_y_accel += _delta * mouse_sensitivity
+			turret_y_accel += delta * mouse_sensitivity
 		if turret_y_negative:
-			turret_y_accel -= _delta * mouse_sensitivity
+			turret_y_accel -= delta * mouse_sensitivity
 			#$Camera3D.rotation.y -= _delta * mouse_sensitivity
 		turret_y_accel = clampf(turret_y_accel, -1, 1)
 	else:
 		if abs(turret_y_accel) < 0.05:
 			turret_y_accel = 0
 		else:
-			turret_y_accel = lerpf(turret_y_accel, 0, _delta * mouse_sensitivity * 2.0)
+			turret_y_accel = lerpf(turret_y_accel, 0, delta * mouse_sensitivity * 2.0)
 			
 	if turret_x_negative != turret_x_positive:
 		if turret_x_positive:
-			turret_x_accel += _delta * mouse_sensitivity
+			turret_x_accel += delta * mouse_sensitivity
 		if turret_x_negative:
-			turret_x_accel -= _delta * mouse_sensitivity
+			turret_x_accel -= delta * mouse_sensitivity
 		turret_x_accel = clampf(turret_x_accel, -1, 1)
 	else:
 		if abs(turret_x_accel) < 0.05:
 			turret_x_accel = 0
 		else:
-			turret_x_accel = lerpf(turret_x_accel, 0, _delta * mouse_sensitivity * 2.0)
+			turret_x_accel = lerpf(turret_x_accel, 0, delta * mouse_sensitivity * 2.0)
 	
-	$Camera3D.rotation.y += turret_y_accel * _delta
+	$Camera3D.rotation.y += turret_y_accel * delta
 	#$Camera3D.rotation_degrees.y = clampf($Camera3D.rotation_degrees.y, 90 - turret_y_range, 90 + turret_y_range)
 	if $Camera3D.rotation_degrees.y > 90 + turret_y_range:
 		$Camera3D.rotation_degrees.y = 90 + turret_y_range
@@ -186,7 +195,7 @@ func _process(_delta: float):
 	elif $Camera3D.rotation_degrees.y < 90 - turret_y_range:
 		$Camera3D.rotation_degrees.y = 90 - turret_y_range
 		turret_y_accel = 0
-	$Camera3D.rotation.x += turret_x_accel * _delta
+	$Camera3D.rotation.x += turret_x_accel * delta
 	#$Camera3D.rotation_degrees.x = clampf($Camera3D.rotation_degrees.x, turret_x_range_min, turret_x_range_max)
 	if $Camera3D.rotation_degrees.x > turret_x_range_max:
 		$Camera3D.rotation_degrees.x = turret_x_range_max
@@ -195,20 +204,19 @@ func _process(_delta: float):
 		$Camera3D.rotation_degrees.x = turret_x_range_min
 		turret_x_accel = 0
 	
-	turret_cooldown -= _delta
+	turret_cooldown -= delta
 	if turret_fire and turret_cooldown <= 0:
 		var bullet : Node3D = bullet_scene.instantiate()
 		bullet.rotation = $Camera3D.rotation
 		bullet.position = $Camera3D.position
 		add_child(bullet)
+		shots_fired += 1
+		$HUD.set_stat("Shots Fired", str(shots_fired))
 		turret_cooldown = 0.5
-	
+		
+func move_train() -> void:
 	for i in range(0, box_car_count):
 		place_box_car(train_cars[i], i)
-	
-	move_reticule($Camera3D)
-	
-	update_enemies()
 
 func update_enemies() -> void:
 	if all_enemies.is_empty():
