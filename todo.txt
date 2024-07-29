@@ -29,10 +29,17 @@ Waves:
   - intermission
   - terrain changes
   - enemy health & destruction
-  - different enemy types
   - Enemy threat to train
 	- Fix up firing VFX
 	- Train HP/shields/armor
+
+Enemy types:
+  + Hovertank (water & land)
+  - fixed turret (land)
+  - ground tank (land)
+  - Ogre tank (land)
+  - Drone (all)
+  - Helecopter (cliffside)
 
 Primary Weapons:
   - Different weapon types
@@ -49,6 +56,18 @@ Primary Weapons:
 	- clip size
 	- clip reload time
 	- heat build up / cooldown
+
+Terrain:
+  - Transitions
+    - Bridge
+    - Ocean
+    - Tunnel
+    - Space Portal ?
+  - Biomes for fights
+    + desert hills
+    - islands in a swamp/ocean
+    - city
+    - cliffside
 
 Mods:
   - weapon mod slots
