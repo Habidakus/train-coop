@@ -134,25 +134,18 @@ var terrain_scale_max : float = 7
 func initialize_terrain() -> void:
 	assert(all_terrain.is_empty())
 	for i in range(0, terrain_count):
-		# TODO: Move to the terrain's spawn() function
-		var loc = Vector3.ZERO
-		while loc == Vector3.ZERO:
-			var x : float = 0 - (randf() * 2048.0 + 128.0)
-			var z : float = 512 + get_train_start_z() - randf() * 1024.0
-			loc = get_ground_pos(Vector3(x, 10, z))
 		var terrain : Node3D = metal_lump.instantiate()
 		all_terrain.append(terrain)
 		add_child(terrain)
-		terrain.global_position = loc
-		terrain.global_rotation = Vector3(randf(), randf(), randf())
-		terrain.scale *= units_per_meter * randf_range(terrain_scale_min, terrain_scale_max)
-		
-		# We only use one of the four possible rocks
-		var j = str("0", randi() % 4)
-		var child_list = terrain.get_children()
-		for child in child_list:
-			if child.name != j:
-				child.queue_free()
+		terrain.global_position = get_rock_loc(get_train_start_z() - 512)
+		terrain.spawn(units_per_meter * randf_range(terrain_scale_min, terrain_scale_max))
+
+func update_terrain(chunk_position : Vector3) -> void:
+	for rock : Node3D in all_terrain:
+		if !rock.visible:
+			if randi() % 3 == 1:
+				rock.global_position = get_rock_loc(chunk_position.z)
+				rock.show()
 
 func get_train_start_z() -> float:
 	return get_box_car_position(0).z - box_car_spacing_feet * meters_per_foot / 2.0
@@ -354,15 +347,45 @@ func update_chunks():
 		for z in range(pz - 4 * chunk_amount, pz):
 			add_chunk(x, z)
 
+func get_rock_loc(z_center : float) -> Vector3:
+	var loc = Vector3.ZERO
+	while loc == Vector3.ZERO:
+		var x : float = 0 - (randf() * 2048.0 + 128.0)
+		var z : float = randf_range(z_center + (chunk_size / 2.0), z_center - (chunk_size / 2.0))
+		loc = get_ground_pos(Vector3(x, 10, z))
+	return loc
+
 func clean_up_chunks():
 	var pt = $Camera3D.position
 	var pz :int = int(pt.z / chunk_size)
 	var fadeZ = pz + chunk_amount
 	var all_keys = existing_chunks.keys()
+	var trigger : bool = false
 	for key in all_keys:
 		if key.y >= fadeZ:
 			existing_chunks[key].queue_free()
 			existing_chunks.erase(key)
+			trigger = true
+
+	if trigger:
+		var pzz = pt.z + chunk_size * 2
+		var mmax = 0
+		var mmin = 0
+		var mset = false
+		for rock in all_terrain:
+			if rock.position.z > pzz:
+				if mset == false:
+					mset = true
+					mmax = rock.position.z
+					mmin = rock.position.z
+				elif rock.position.z > mmax:
+					mmax = rock.position.z
+				elif rock.position.z < mmin:
+					mmin = rock.position.z
+				(rock as Node3D).hide()
+				#rock.global_position = get_rock_loc()
+		if mset:
+			print("remove range = (", mmin, ", ", mmax, ") and camera = ", $Camera3D.position.z)
 
 func reset_chunks():
 	pass
@@ -420,6 +443,8 @@ func load_chunk(key: Vector2i, chunk):
 	if all_enemies.is_empty() && existing_chunks.size() >= 9:
 		initialize_enemies()
 		initialize_terrain()
+	if key.x == 0:
+		update_terrain(chunk.position)
 
 func get_chunk(key : Vector2i):
 	if existing_chunks.has(key):
