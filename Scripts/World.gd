@@ -139,6 +139,8 @@ func initialize_terrain() -> void:
 		add_child(terrain)
 		terrain.global_position = get_rock_loc(get_train_start_z() - 512)
 		terrain.spawn(units_per_meter * randf_range(terrain_scale_min, terrain_scale_max))
+		if randi() % 10 != 1:
+			terrain.hide()
 
 func update_terrain(chunk_position : Vector3) -> void:
 	for rock : Node3D in all_terrain:
