@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://clroau2frju5j"]
+[gd_scene load_steps=18 format=3 uid="uid://clroau2frju5j"]
 
 [ext_resource type="Script" path="res://Scripts/World.gd" id="1_ii6my"]
 [ext_resource type="PackedScene" uid="uid://dockr54xmjfuy" path="res://Scenes/chunk.tscn" id="2_nxgqr"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://c6h3s5icbhjo3" path="res://Scenes/tank_two.tscn" id="4_ppkjr"]
 [ext_resource type="PackedScene" uid="uid://d3hqofk0bdsum" path="res://Scenes/bullet.tscn" id="5_6x1xf"]
 [ext_resource type="PackedScene" uid="uid://dl1fyw0we4ief" path="res://Scenes/target_reticule.tscn" id="6_nl3rw"]
+[ext_resource type="PackedScene" uid="uid://b4h8byxl1w5wc" path="res://Scenes/metal_lump.tscn" id="8_ngl7d"]
 [ext_resource type="PackedScene" uid="uid://bwdnys6nqp6s4" path="res://Scenes/hud.tscn" id="8_vs707"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_yj3jc"]
@@ -60,6 +61,7 @@ train_car_scene = ExtResource("3_dyul8")
 enemy_scene = ExtResource("4_ppkjr")
 bullet_scene = ExtResource("5_6x1xf")
 reticule_scene = ExtResource("6_nl3rw")
+metal_lump = ExtResource("8_ngl7d")
 chunk_material = SubResource("StandardMaterial3D_gy0so")
 train_speed_miles_per_hour = 25.0
 box_car_spacing_feet = 58.0

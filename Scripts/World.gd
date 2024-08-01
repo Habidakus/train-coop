@@ -7,6 +7,7 @@ extends Node3D
 @export var enemy_scene : PackedScene
 @export var bullet_scene : PackedScene
 @export var reticule_scene : PackedScene
+@export var metal_lump : PackedScene
 @export var chunk_material : Material
 @export var train_speed_miles_per_hour : float = 40
 @export var box_car_spacing_feet : float = 60
@@ -106,11 +107,52 @@ func initialize_enemies() -> void:
 	for i in range(0, enemy_count):
 		var enemy = enemy_scene.instantiate()
 		#enemy.find_child("Model").scale *= units_per_meter
-		enemy.scale *= units_per_meter
+		enemy.scale *= units_per_meter		
 		enemies_left_in_wave -= 1
 		all_enemies.append(enemy)
 		add_child(enemy)
 		enemy.spawn(self)
+
+
+func get_ground_pos(pos : Vector3):
+	var start_point = pos + Vector3.UP * 128
+	var end_point = pos + Vector3.DOWN * 128
+
+	var query = PhysicsRayQueryParameters3D.create(start_point, end_point)
+	query.collision_mask = 2
+
+	var result : Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
+	if result.is_empty():
+		return Vector3.ZERO
+	else:
+		return result["position"]
+
+var all_terrain = []
+var terrain_count : int = 100
+var terrain_scale_min : float = 1
+var terrain_scale_max : float = 7
+func initialize_terrain() -> void:
+	assert(all_terrain.is_empty())
+	for i in range(0, terrain_count):
+		# TODO: Move to the terrain's spawn() function
+		var loc = Vector3.ZERO
+		while loc == Vector3.ZERO:
+			var x : float = 0 - (randf() * 2048.0 + 128.0)
+			var z : float = 512 + get_train_start_z() - randf() * 1024.0
+			loc = get_ground_pos(Vector3(x, 10, z))
+		var terrain : Node3D = metal_lump.instantiate()
+		all_terrain.append(terrain)
+		add_child(terrain)
+		terrain.global_position = loc
+		terrain.global_rotation = Vector3(randf(), randf(), randf())
+		terrain.scale *= units_per_meter * randf_range(terrain_scale_min, terrain_scale_max)
+		
+		# We only use one of the four possible rocks
+		var j = str("0", randi() % 4)
+		var child_list = terrain.get_children()
+		for child in child_list:
+			if child.name != j:
+				child.queue_free()
 
 func get_train_start_z() -> float:
 	return get_box_car_position(0).z - box_car_spacing_feet * meters_per_foot / 2.0
@@ -377,7 +419,7 @@ func load_chunk(key: Vector2i, chunk):
 	pending_chunks.erase(key)
 	if all_enemies.is_empty() && existing_chunks.size() >= 9:
 		initialize_enemies()
-		
+		initialize_terrain()
 
 func get_chunk(key : Vector2i):
 	if existing_chunks.has(key):

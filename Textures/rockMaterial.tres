@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://byfdthu6njeo8"]
+
+[resource]
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.431373, 0.603922, 0.709804, 1)
+metallic = 0.64
+metallic_specular = 0.14
+roughness = 0.15

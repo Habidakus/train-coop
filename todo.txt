@@ -59,15 +59,15 @@ Primary Weapons:
 
 Terrain:
   - Transitions
-    - Bridge
-    - Ocean
-    - Tunnel
-    - Space Portal ?
+	- Bridge
+	- Ocean
+	- Tunnel
+	- Space Portal ?
   - Biomes for fights
-    + desert hills
-    - islands in a swamp/ocean
-    - city
-    - cliffside
+	+ desert hills
+	- islands in a swamp/ocean
+	- city
+	- cliffside
 
 Mods:
   - weapon mod slots
